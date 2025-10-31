@@ -1,0 +1,38 @@
+export const mockUsers = [
+  {
+    person_id: 1,
+    email: "admin@mail.com",
+    password: "1234",
+    role: "administrador",
+    name: "Erick Daniel",
+    first_surname: "Martinez",
+    second_surname: "Martínez",
+  },
+  {
+    person_id: 2,
+    email: "mesa@mail.com",
+    password: "1234",
+    role: "mesa_servicios",
+    name: "Ethan",
+    first_surname: "Sarricolea",
+    second_surname: "Cortes",
+  },
+  {
+    person_id: 3,
+    email: "supervisor@mail.com",
+    password: "1234",
+    role: "supervisor_tecnico",
+    name: "Elias",
+    first_surname: "Martinez",
+    second_surname: "Dominguez",
+  },
+  {
+    person_id: 4,
+    email: "usuario@mail.com",
+    password: "1234",
+    role: "usuario_ciudadano",
+    name: "Abraham",
+    first_surname: "Barrera",
+    second_surname: "Torres",
+  },
+] as const;
