@@ -1,4 +1,4 @@
-## About This Proyect
+## About This Project
 
 Mi Reporte is an application designed to manage the pothole reporting system in Mexico. This platform includes a web-based system available to administrators, service desk staff, and technical supervisors, with the aim of managing the entire administrative process of the reports generated, as well as the metrics for handling, resolving, and ensuring the efficiency of the incidents reported.
 
