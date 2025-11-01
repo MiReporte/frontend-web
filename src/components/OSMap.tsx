@@ -4,6 +4,10 @@ import { MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { useEffect } from "react";
 
+/**
+ * Component that renders an OpenStreetMap map using react-leaflet.
+ * @returns JSX.Element - The map view component.
+ */
 const MapView: React.FC = () => {
   useEffect(() => {}, []);
 
