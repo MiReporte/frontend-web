@@ -10,6 +10,13 @@ type ProtectedPageProps = {
   children: ReactNode;
 };
 
+/**
+ * Component that protects its children based on user permissions.
+ *
+ * @param permission - The required permission to access the children components.
+ * @param children - The child components to be protected.
+ * @returns The children components if the user has the required permission; otherwise, redirects to the dashboard.
+ */
 export default function ProtectedPage({
   permission,
   children,

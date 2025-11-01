@@ -1,10 +1,12 @@
-// lib/authContext.tsx
 "use client";
 
-import { createContext, useState, ReactNode, useContext } from "react";
+import { createContext, useState, ReactNode } from "react";
 import { AuthManager } from "@/lib/authManager";
 import { User } from "@/utils/types";
 
+/**
+ * Context of authentication to manage user login state across the application.
+ */
 export type AuthContextType = {
   user: User | null;
   login: (email: string, password: string) => boolean;
@@ -12,10 +14,18 @@ export type AuthContextType = {
   isLoggedIn: boolean;
 };
 
+/**
+ * Creation of the AuthContext with default undefined value.
+ */
 export const AuthContext = createContext<AuthContextType | undefined>(
   undefined
 );
 
+/**
+ *
+ * @param children - The child components that will have access to the authentication context.
+ * @returns The AuthProvider component that wraps around children components to provide authentication context.
+ */
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(() =>
     typeof window !== "undefined" ? AuthManager.getUser() : null
@@ -44,11 +54,4 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       {children}
     </AuthContext.Provider>
   );
-};
-
-// Hook para usar el contexto
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth debe usarse dentro de AuthProvider");
-  return context;
 };
