@@ -3,18 +3,37 @@ export interface LoginCredentials {
   password: string;
 }
 
-export type UserRole =
-  | "administrador"
-  | "mesa_servicios"
-  | "supervisor_tecnico"
-  | "usuario_ciudadano";
+export interface LoginResponse {
+  token: string;
+  expiration: number;
+  user: {
+    person_id: number;
+    name: string;
+    first_surname: string;
+    second_surname: string;
+    email: string;
+    role: string;
+  };
+}
 
 export interface User {
-  person_id: number;
+  token: string;
   name: string;
   first_surname: string;
   second_surname: string;
   email: string;
   role: UserRole;
-  token: string; // JWT
 }
+
+export type UserRole =
+  | "Administrador"
+  | "Mesa de servicios"
+  | "Supervisor tecnico"
+  | "Usuario ciudadano";
+
+export type AuthContextType = {
+  user: User | null;
+  login: (email: string, password: string) => Promise<boolean>;
+  logout: () => void;
+  isLoggedIn: boolean;
+};

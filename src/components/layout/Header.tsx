@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/lib/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Notification from "@/assets/Notification.svg";

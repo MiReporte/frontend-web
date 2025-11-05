@@ -86,7 +86,6 @@
   text-align: center;
 }
 
-/* 🔹 Estilos responsive para móviles y tablets */
 @media (max-width: 768px) {
   .container {
     flex-direction: column;
@@ -97,7 +96,7 @@
   }
 
   .mapContainer {
-    display: none; /* Oculta completamente el mapa */
+    display: none;
   }
 
   .formContainer {

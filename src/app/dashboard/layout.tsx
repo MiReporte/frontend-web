@@ -2,7 +2,7 @@
 
 import { Sidebar } from "@/components/layout/SideBar";
 import { Header } from "@/components/layout/Header";
-import { useAuth } from "@/lib/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import styles from "./dashboard.module.css";
@@ -23,7 +23,7 @@ export default function DashboardLayout({
   }, []);
 
   useEffect(() => {
-    if (hydrated && (!isLoggedIn || user?.role === "usuario_ciudadano")) {
+    if (hydrated && (!isLoggedIn || user?.role === "Usuario ciudadano")) {
       router.push("/login");
     }
   }, [hydrated, isLoggedIn, user, router]);

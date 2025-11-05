@@ -1,23 +1,25 @@
 "use client";
+
 import { useState, FormEvent } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { LoginCredentials } from "@/utils/types";
-import { validateEmail } from "@/utils/Validator";
-import logo from "@/assets/MiReporte.svg";
+import { validateEmail, validatePassword } from "@/utils/Validator";
+import Image from "next/image";
 import dynamic from "next/dynamic";
+import logo from "@/assets/MiReporte.svg";
 import styles from "./login.module.css";
 
-const MapView = dynamic(() => import("@/components/OSMap"), {
-  ssr: false,
-});
+const MapView = dynamic(() => import("@/components/OSMap"), { ssr: false });
 
 const LoginPage = (): React.JSX.Element => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState<{ email?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+    {}
+  );
   const [loginError, setLoginError] = useState<string | null>(null);
+
   const { login } = useAuth();
   const router = useRouter();
 
@@ -27,28 +29,37 @@ const LoginPage = (): React.JSX.Element => {
     setLoginError(null);
 
     const emailError = validateEmail(email);
+    const passwordError = validatePassword(password);
 
-    if (emailError) {
-      setErrors({ email: emailError });
+    if (emailError || passwordError) {
+      setErrors({
+        email: emailError ?? undefined,
+        password: passwordError ?? undefined,
+      });
       return;
     }
 
-    const credentials: LoginCredentials = { email, password };
+    try {
+      const credentials: LoginCredentials = { email, password };
+      const user = await login(credentials.email, credentials.password);
 
-    const user = login(credentials.email, credentials.password);
+      if (!user) {
+        setLoginError("Correo o contraseña incorrectos");
+        return;
+      }
 
-    if (!user) {
-      setLoginError("Correo o contraseña incorrectos");
-      return;
+      router.push("/dashboard");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Error al iniciar sesión";
+      setLoginError(message);
     }
-
-    router.push("/dashboard");
   };
 
   return (
     <div className={styles.container}>
       <div className={styles.formContainer}>
-        <form onSubmit={handleSubmit} className={styles.form}>
+        <form onSubmit={handleSubmit} className={styles.form} noValidate>
           <Image
             src={logo}
             alt="MiReporte Logo"
@@ -66,6 +77,7 @@ const LoginPage = (): React.JSX.Element => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className={styles.input}
+            aria-invalid={!!errors.email}
             required
           />
           {errors.email && (
@@ -80,8 +92,12 @@ const LoginPage = (): React.JSX.Element => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className={styles.input}
+            aria-invalid={!!errors.password}
             required
           />
+          {errors.password && (
+            <div className={styles.errorMessage}>{errors.password}</div>
+          )}
 
           {loginError && <p className={styles.error}>{loginError}</p>}
 
@@ -94,6 +110,7 @@ const LoginPage = (): React.JSX.Element => {
           </a>
         </form>
       </div>
+
       <div className={styles.mapContainer}>
         <MapView />
       </div>
