@@ -1,14 +1,13 @@
-export type UserRole =
-  | "administrador"
-  | "mesa_servicios"
-  | "supervisor_tecnico"
-  | "usuario_ciudadano";
+import { UserRole } from "@/utils/types";
 
+/**
+ * Permissions associated with each user role.
+ */
 export const rolePermissions: Record<
-  Exclude<UserRole, "usuario_ciudadano">,
+  Exclude<UserRole, "Usuario ciudadano">,
   string[]
 > = {
-  administrador: [
+  Administrador: [
     "resumen",
     "analisis",
     "usuarios",
@@ -16,6 +15,6 @@ export const rolePermissions: Record<
     "conceptos",
     "perfil",
   ],
-  mesa_servicios: ["resumen", "usuarios", "reportes", "perfil"],
-  supervisor_tecnico: ["reportes", "conceptos", "perfil"],
+  "Mesa de servicios": ["resumen", "usuarios", "reportes", "perfil"],
+  "Supervisor tecnico": ["reportes", "conceptos", "perfil"],
 };

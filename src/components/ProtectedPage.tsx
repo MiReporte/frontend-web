@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode, useEffect } from "react";
-import { useAuth } from "@/lib/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { rolePermissions } from "@/lib/permissions";
 
@@ -30,7 +30,7 @@ export default function ProtectedPage({
     if (
       isClient &&
       (!isLoggedIn ||
-        user?.role === "usuario_ciudadano" ||
+        user?.role === "Usuario ciudadano" ||
         !rolePermissions[user!.role]?.includes(permission))
     ) {
       router.push("/dashboard");

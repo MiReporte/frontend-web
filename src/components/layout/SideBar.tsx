@@ -1,7 +1,7 @@
 "use client";
 
 import { rolePermissions } from "@/lib/permissions";
-import { useAuth } from "@/lib/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { usePathname } from "next/navigation";
 import styles from "@/components/layout/SideBar.module.css";
 import Link from "next/link";
@@ -18,7 +18,7 @@ export function Sidebar() {
   const { user } = useAuth();
   const pathname = usePathname();
 
-  if (!user || user.role === "usuario_ciudadano") return null;
+  if (!user || user.role === "Usuario ciudadano") return null;
 
   const permissions = rolePermissions[user.role];
 
