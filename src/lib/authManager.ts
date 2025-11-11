@@ -2,8 +2,7 @@ import { User, LoginCredentials, LoginResponse } from "@/utils/types";
 
 const AUTH_KEY = "auth_data";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "https://backend-cgz3.onrender.com";
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 /**
  * Manager of authentication-related operations such as login, logout, and retrieving user data.

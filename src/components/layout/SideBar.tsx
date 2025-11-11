@@ -24,13 +24,15 @@ export function Sidebar() {
 
   return (
     <aside className={styles.sidebar}>
-      <Image
-        src={Mireporte}
-        alt="Mi Reporte Logo"
-        className={styles.logo}
-        width={150}
-        height={50}
-      />
+      <Link href="/dashboard">
+        <Image
+          src={Mireporte}
+          alt="Mi Reporte Logo"
+          className={styles.logo}
+          width={200}
+          height={100}
+        />
+      </Link>
 
       <ul className={styles.list}>
         {permissions.includes("resumen") && (

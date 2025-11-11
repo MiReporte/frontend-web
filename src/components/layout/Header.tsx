@@ -4,13 +4,18 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Notification from "@/assets/Notification.svg";
+import CloseSesion from "@/assets/CloseSesion.svg";
 import styles from "@/components/layout/Header.module.css";
 
 export function Header() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const pathname = usePathname();
 
   if (!user) return null;
+
+  const handleCloseSesion = () => {
+    logout();
+  };
 
   return (
     <header className={styles.header}>
@@ -22,13 +27,26 @@ export function Header() {
         {pathname.includes("/dashboard/conceptos") && "Catálogo de Conceptos"}
         {pathname.includes("/dashboard/profile") && "Mi Perfil"}
       </h1>
-      <Image
-        src={Notification}
-        alt="Icono Notificaciones"
-        width={32}
-        height={32}
-        className={styles.notificationIcon}
-      />
+      {pathname.includes("/dashboard/profile") ? (
+        <Image
+          src={CloseSesion}
+          alt="Cerrar Sesión"
+          width={32}
+          height={32}
+          className={styles.notificationIcon}
+          onClick={() => handleCloseSesion()}
+        />
+      ) : (
+        <div className={styles.userInfo}>
+          <Image
+            src={Notification}
+            alt="Icono Notificaciones"
+            width={32}
+            height={32}
+            className={styles.notificationIcon}
+          />
+        </div>
+      )}
     </header>
   );
 }

@@ -18,15 +18,9 @@ export default function DashboardPage() {
   if (!isLoggedIn || !user) return null;
 
   return (
-    <div className={styles.container}>
+    <div className={styles.welcomeContainer}>
       <h1 className={styles.title}>Bienvenido, {user.name} 👋</h1>
-      <p className={styles.subtitle}>
-        Estás en tu panel principal ({user.role}).
-      </p>
-
-      <div className={styles.content}>
-        <p>Selecciona una opción del menú lateral para comenzar.</p>
-      </div>
+      <p>¿Qué te gustaría hacer hoy?</p>
     </div>
   );
 }
