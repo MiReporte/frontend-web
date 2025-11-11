@@ -37,3 +37,24 @@ export type AuthContextType = {
   logout: () => void;
   isLoggedIn: boolean;
 };
+
+export interface ResponseReports {
+  report_id: number;
+  date: string;
+  status: string;
+  latitude: number;
+  longitude: number;
+  description: string;
+  evidence: string;
+  assigned_supervisor: number | null;
+  reporting_user: number | null;
+  typereport: string;
+}
+
+export interface PaginatedResponse {
+  items: ResponseReports[];
+  limit: number;
+  page: number;
+  totalItems: number;
+  totalPages: number;
+}

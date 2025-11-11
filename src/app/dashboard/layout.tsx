@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import styles from "./dashboard.module.css";
+import LoadingImage from "@/components/LoadingImage";
 
 export default function DashboardLayout({
   children,
@@ -28,7 +29,7 @@ export default function DashboardLayout({
     }
   }, [hydrated, isLoggedIn, user, router]);
 
-  if (!hydrated || !isLoggedIn || !user) return <div>Cargando...</div>;
+  if (!hydrated || !isLoggedIn || !user) return <LoadingImage />;
 
   return (
     <div className={styles.layout}>
