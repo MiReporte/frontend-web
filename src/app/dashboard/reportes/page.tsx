@@ -10,7 +10,7 @@ import ProtectedPage from "@/components/ProtectedPage";
 import LoadingImage from "@/components/LoadingImage";
 import EyeIcon from "@/assets/EyeOutline.svg";
 import CatalogIcon from "@/assets/TextFile.svg";
-import SupervisorIcon from "@/assets/worker.svg";
+import SupervisorIcon from "@/assets/Worker.svg";
 import styles from "@/app/dashboard/reportes/reportesPage.module.css";
 
 export default function ReportesPage() {
