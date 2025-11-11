@@ -24,10 +24,10 @@ export default function ReportesPage() {
   const limit = 10;
   const addressCache = new Map<string, string>();
 
-  const fetchReports = async (page: number) => {
+  const fetchReports = async (page: number, status = "") => {
     try {
       setLoading(true);
-      const data = await getReports(page, limit);
+      const data = await getReports(page, limit, status);
 
       const concurrency = 2;
       const results: (ResponseReports & { address?: string })[] = [];
@@ -38,7 +38,6 @@ export default function ReportesPage() {
         const batchResults = await Promise.all(
           batch.map(async (report) => {
             const key = `${report.latitude},${report.longitude}`;
-
             if (addressCache.has(key)) {
               return { ...report, address: addressCache.get(key) };
             }
@@ -85,16 +84,8 @@ export default function ReportesPage() {
   };
 
   const handleSwitch = (status: string) => async () => {
-    try {
-      setLoading(true);
-      const data = await getReports(1, limit, status);
-      setReports(data.items);
-      setTotalPages(data.totalPages);
-    } catch (err: unknown) {
-      setError(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
+    await fetchReports(1, status);
+    setCurrentPage(1);
   };
 
   return (
