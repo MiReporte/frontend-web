@@ -19,6 +19,7 @@ export interface LoginResponse {
 export interface User {
   token: string;
   name: string;
+  expiration: number;
   first_surname: string;
   second_surname: string;
   email: string;

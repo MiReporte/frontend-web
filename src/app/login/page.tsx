@@ -5,12 +5,10 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { LoginCredentials } from "@/utils/types";
 import { validateEmail, validatePassword } from "@/utils/Validator";
+import HeroImage from "/public/HeroImage.png";
 import Image from "next/image";
-import dynamic from "next/dynamic";
 import logo from "@/assets/MiReporte.svg";
 import styles from "./login.module.css";
-
-const MapView = dynamic(() => import("@/components/OSMap"), { ssr: false });
 
 const LoginPage = (): React.JSX.Element => {
   const [email, setEmail] = useState("");
@@ -80,9 +78,6 @@ const LoginPage = (): React.JSX.Element => {
             aria-invalid={!!errors.email}
             required
           />
-          {errors.email && (
-            <div className={styles.errorMessage}>{errors.email}</div>
-          )}
 
           <label htmlFor="password">Ingresa tu contraseña</label>
           <input
@@ -95,9 +90,6 @@ const LoginPage = (): React.JSX.Element => {
             aria-invalid={!!errors.password}
             required
           />
-          {errors.password && (
-            <div className={styles.errorMessage}>{errors.password}</div>
-          )}
 
           {loginError && <p className={styles.error}>{loginError}</p>}
 
@@ -112,7 +104,12 @@ const LoginPage = (): React.JSX.Element => {
       </div>
 
       <div className={styles.mapContainer}>
-        <MapView />
+        <Image
+          src={HeroImage}
+          alt="Hero Image"
+          layout="fill"
+          objectFit="cover"
+        />
       </div>
     </div>
   );
