@@ -1,22 +1,87 @@
-.container {
-  padding: 2rem;
+.welcomeContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
 }
 
 .title {
   font-size: 2rem;
-  font-weight: 600;
-  color: #222;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
 }
 
 .subtitle {
-  font-size: 1.1rem;
-  color: #555;
-  margin-bottom: 1.5rem;
+  font-size: 1.2rem;
+  color: #555555;
 }
 
-.content {
-  border: 1px solid #ddd;
-  padding: 1.5rem;
-  border-radius: 8px;
-  background-color: #fafafa;
+.cardsContainer {
+  display: flex;
+  width: 100%;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 3rem;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3rem;
+  width: 20rem;
+  height: 12rem;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #fdfdfd;
+}
+
+.iconContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 100%;
+}
+
+.card:nth-child(1) .iconContainer {
+  background-color: rgba(221, 22, 22, 0.12);
+}
+
+.card:nth-child(2) .iconContainer {
+  background-color: rgba(201, 221, 22, 0.2);
+}
+
+.card:nth-child(3) .iconContainer {
+  background-color: rgba(22, 137, 221, 0.14);
+}
+
+.card:nth-child(4) .iconContainer {
+  background-color: rgba(22, 25, 221, 0.14);
+}
+
+.card:nth-child(5) .iconContainer {
+  background-color: rgba(137, 22, 221, 0.18);
+}
+
+.cardTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-top: 0.8rem;
+}
+
+.cardDesc {
+  font-size: 1rem;
+  text-align: center;
+  margin-top: 0.4rem;
+  color: #555555;
 }

@@ -2,7 +2,7 @@ import "@/app/globals.css";
 import { AuthProvider } from "@/lib/authContext";
 
 export const metadata = {
-  title: "Panel de Roles",
+  title: "Administración MiReporte",
 };
 
 export default function RootLayout({

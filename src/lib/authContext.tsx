@@ -1,12 +1,9 @@
 "use client";
 
-import { createContext, useState, ReactNode } from "react";
+import { createContext, useState, useEffect, ReactNode } from "react";
 import { AuthManager } from "@/lib/authManager";
 import { User, AuthContextType } from "@/utils/types";
 
-/**
- * Create the authentication context
- */
 export const AuthContext = createContext<AuthContextType | undefined>(
   undefined
 );
@@ -20,6 +17,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(() =>
     typeof window !== "undefined" ? AuthManager.getUser() : null
   );
+
+  /**
+   * Automatically logs out the user when the token expires.
+   */
+  useEffect(() => {
+    if (!user?.expiration) return;
+
+    const now = Date.now();
+    const expirationTime = user.expiration * 1000;
+    const timeLeft = expirationTime - now;
+
+    if (timeLeft <= 0) {
+      queueMicrotask(() => {
+        AuthManager.logout();
+        setUser(null);
+      });
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      AuthManager.logout();
+      setUser(null);
+    }, timeLeft);
+
+    return () => clearTimeout(timer);
+  }, [user]);
 
   /**
    * Login function that authenticates the user and updates the global state.

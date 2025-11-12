@@ -1,7 +1,6 @@
 import { User, LoginCredentials, LoginResponse } from "@/utils/types";
 
 const AUTH_KEY = "auth_data";
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 /**
@@ -43,6 +42,7 @@ export const AuthManager = {
 
       const user: User = {
         token: data.token,
+        expiration: data.expiration,
         name: data.user.name,
         first_surname: data.user.first_surname,
         second_surname: data.user.second_surname,
@@ -78,10 +78,23 @@ export const AuthManager = {
   /**
    * Retrieves the currently logged-in user's data from localStorage.
    * @returns {User | null} The user's data or null if no user is logged in.
+   * Automatically logs out the user if the token has expired.
    */
   getUser(): User | null {
     if (typeof window === "undefined") return null;
+
     const data = localStorage.getItem(AUTH_KEY);
-    return data ? (JSON.parse(data) as User) : null;
+    if (!data) return null;
+
+    const user = JSON.parse(data) as User;
+
+    const now = Math.floor(Date.now() / 1000);
+    if (user.expiration && now > user.expiration) {
+      console.warn("Token expirado, cerrando sesión automáticamente.");
+      this.logout();
+      return null;
+    }
+
+    return user;
   },
 };
