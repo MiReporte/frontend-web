@@ -5,6 +5,7 @@ import { getReports } from "@/services/getReports";
 import type { ResponseReports } from "@/utils/types";
 import { getErrorMessage } from "@/utils/errorHandler";
 import { reverseGeocode } from "@/utils/reverseGeocoding";
+import { NewStateSelector } from "@/components/NewStateSelector";
 import Image from "next/image";
 import ProtectedPage from "@/components/ProtectedPage";
 import LoadingImage from "@/components/LoadingImage";
@@ -72,9 +73,6 @@ export default function ReportesPage() {
     fetchReports(currentPage);
   }, [currentPage]);
 
-  if (loading) return <LoadingImage />;
-  if (error) return <p>Error: {error}</p>;
-
   const handlePrevPage = () => {
     if (currentPage > 1) setCurrentPage((p) => p - 1);
   };
@@ -113,7 +111,19 @@ export default function ReportesPage() {
           </tr>
         </thead>
         <tbody>
-          {reports.length > 0 ? (
+          {loading ? (
+            <tr>
+              <td colSpan={6} className={styles.loadingCell}>
+                <LoadingImage />
+              </td>
+            </tr>
+          ) : error ? (
+            <tr>
+              <td colSpan={6} className={styles.errorCell}>
+                Error: {error}
+              </td>
+            </tr>
+          ) : reports.length > 0 ? (
             reports.map((report) => (
               <tr key={report.report_id}>
                 <td className={styles.cellReport}>{report.report_id}</td>
@@ -124,7 +134,14 @@ export default function ReportesPage() {
                     : "Cargando..."}
                 </td>
                 <td className={styles.cellReport}>{report.date}</td>
-                <td className={styles.cellReport}>{report.status}</td>
+
+                <td className={styles.cellReport}>
+                  <NewStateSelector
+                    reportId={report.report_id}
+                    currentStatus={report.status}
+                  />
+                </td>
+
                 <td className={styles.cellReport}>
                   <span className={styles.buttonVer}>
                     <Image src={EyeIcon} alt="Ver" width={16} height={16} /> Ver
@@ -152,32 +169,36 @@ export default function ReportesPage() {
             ))
           ) : (
             <tr>
-              <td colSpan={6}>No hay reportes disponibles</td>
+              <td colSpan={6} style={{ textAlign: "center", padding: "1rem" }}>
+                No hay reportes disponibles
+              </td>
             </tr>
           )}
-          <tr>
-            <td colSpan={6} className={styles.paginationContainer}>
-              <div className={styles.paginationContent}>
-                <button
-                  onClick={handlePrevPage}
-                  disabled={currentPage === 1}
-                  className={styles.pageButton}
-                >
-                  Anterior
-                </button>
-                <span>
-                  Página {currentPage} de {totalPages}
-                </span>
-                <button
-                  onClick={handleNextPage}
-                  disabled={currentPage === totalPages}
-                  className={styles.pageButton}
-                >
-                  Siguiente
-                </button>
-              </div>
-            </td>
-          </tr>
+          {!loading && (
+            <tr>
+              <td colSpan={6} className={styles.paginationContainer}>
+                <div className={styles.paginationContent}>
+                  <button
+                    onClick={handlePrevPage}
+                    disabled={currentPage === 1}
+                    className={styles.pageButton}
+                  >
+                    Anterior
+                  </button>
+                  <span>
+                    Página {currentPage} de {totalPages}
+                  </span>
+                  <button
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages}
+                    className={styles.pageButton}
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </ProtectedPage>

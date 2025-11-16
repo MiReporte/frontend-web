@@ -2,7 +2,8 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import styles from "./not-found.module.css";
+import styles from "@/app/not-found.module.css";
+import "@/app/globals.css";
 import NotFound from "@/assets/Not-Found.png";
 import Image from "next/image";
 import Back from "@/assets/Back.svg";
@@ -11,7 +12,7 @@ export default function NotFoundPage() {
   const pathname = usePathname();
 
   return (
-    <main className={styles.notFound}>
+    <div className={styles.notFound}>
       <Image
         src={NotFound}
         alt="Página no encontrada"
@@ -28,6 +29,6 @@ export default function NotFoundPage() {
           <Image src={Back} alt="Regresar" className={styles.backIcon} />
         </Link>
       </div>
-    </main>
+    </div>
   );
 }

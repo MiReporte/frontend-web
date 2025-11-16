@@ -59,3 +59,12 @@ export interface PaginatedResponse {
   totalItems: number;
   totalPages: number;
 }
+
+export interface UpdateStateBody {
+  report_id: number;
+  status: string;
+}
+
+export interface UpdateStateResponse {
+  message: string;
+}

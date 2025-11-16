@@ -5,6 +5,7 @@
   justify-content: space-between;
   margin-top: 16px;
   margin-bottom: 16px;
+  flex-wrap: wrap;
 }
 
 .filterContainer span {
@@ -12,12 +13,20 @@
   padding: 12px 20px;
   border: 2px solid #aaaaaa;
   background-color: #ffffff;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.filterContainer span:hover {
+  background-color: #f5f5f5;
+  border-color: #888888;
 }
 
 .reportTable {
   width: 100%;
   height: auto;
   border-collapse: collapse;
+  overflow-x: auto;
+  display: table;
 }
 
 .tableHead {
@@ -44,58 +53,20 @@
   font-size: 1rem;
 }
 
-.statusEnRevision {
-  background-color: #fdbb40;
-  font-weight: bold;
-  color: #f2f2f2;
-  border-radius: 5px;
-  padding: 4px 8px;
-  font-size: 1rem;
+.loadingCell {
+  text-align: center;
+  padding: 2rem;
 }
 
-.statusAprobado {
-  background-color: #22c55e;
-  font-weight: bold;
-  color: #f2f2f2;
-  border-radius: 5px;
-  padding: 4px 8px;
-  font-size: 1rem;
+.errorCell {
+  text-align: center;
+  padding: 1rem;
+  color: #dc2626;
 }
 
-.statusNoAprobado {
-  background-color: #f63be6;
-  font-weight: bold;
-  color: #f2f2f2;
-  border-radius: 5px;
-  padding: 4px 8px;
-  font-size: 1rem;
-}
-
-.statusEnProceso {
-  background-color: #ff7800;
-  font-weight: bold;
-  color: #f2f2f2;
-  border-radius: 5px;
-  padding: 4px 8px;
-  font-size: 1rem;
-}
-
-.statusCompletado {
-  background-color: #3b82f6;
-  font-weight: bold;
-  color: #f2f2f2;
-  border-radius: 5px;
-  padding: 4px 8px;
-  font-size: 1rem;
-}
-
-.statusCierreTecnico {
-  background-color: #6b7280;
-  font-weight: bold;
-  color: #f2f2f2;
-  border-radius: 5px;
-  padding: 4px 8px;
-  font-size: 1rem;
+.emptyCell {
+  text-align: center;
+  padding: 1rem;
 }
 
 .buttonVer {
@@ -109,6 +80,11 @@
   padding: 4px 8px;
   border-radius: 5px;
   cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.buttonVer:hover {
+  background-color: #2563eb;
 }
 
 .buttonCatalogo {
@@ -124,6 +100,11 @@
   cursor: pointer;
   margin-right: 12px;
   margin-left: 12px;
+  transition: background-color 0.2s;
+}
+
+.buttonCatalogo:hover {
+  background-color: #a21cdc;
 }
 
 .buttonSupervisor {
@@ -137,6 +118,11 @@
   padding: 4px 8px;
   border-radius: 5px;
   cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.buttonSupervisor:hover {
+  background-color: #7a8a7a;
 }
 
 .paginationContainer {
@@ -169,4 +155,130 @@
 
 .pageButton:hover:not(:disabled) {
   background-color: #005bb5;
+}
+
+@media (max-width: 768px) {
+  .filterContainer {
+    gap: 8px;
+    font-size: 0.875rem;
+  }
+
+  .filterContainer span {
+    padding: 8px 12px;
+    flex: 1 1 calc(33.333% - 8px);
+    text-align: center;
+    min-width: 100px;
+  }
+
+  .tableCell {
+    padding: 8px;
+    font-size: 0.875rem;
+  }
+
+  .cellReport {
+    padding: 4px 6px;
+    font-size: 0.875rem;
+  }
+
+  .buttonVer,
+  .buttonCatalogo,
+  .buttonSupervisor {
+    font-size: 0.875rem;
+    padding: 4px 6px;
+  }
+
+  .buttonCatalogo {
+    margin-right: 8px;
+    margin-left: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .filterContainer {
+    gap: 6px;
+    font-size: 0.75rem;
+  }
+
+  .filterContainer span {
+    padding: 6px 8px;
+    flex: 1 1 calc(50% - 6px);
+    text-align: center;
+    min-width: 80px;
+  }
+
+  .reportTable {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .reportTable thead,
+  .reportTable tbody,
+  .reportTable tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .tableCell {
+    padding: 6px 4px;
+    font-size: 0.75rem;
+  }
+
+  .cellReport {
+    padding: 4px;
+    font-size: 0.75rem;
+  }
+
+  .buttonVer,
+  .buttonCatalogo,
+  .buttonSupervisor {
+    font-size: 0.7rem;
+    padding: 3px 5px;
+    gap: 2px;
+  }
+
+  .buttonCatalogo {
+    margin-right: 4px;
+    margin-left: 4px;
+  }
+
+  .buttonVer span,
+  .buttonCatalogo span,
+  .buttonSupervisor span {
+    display: none;
+  }
+
+  .paginationContent {
+    gap: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .pageButton {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .filterContainer span {
+    padding: 5px 6px;
+    font-size: 0.7rem;
+  }
+
+  .buttonVer,
+  .buttonCatalogo,
+  .buttonSupervisor {
+    padding: 2px 4px;
+  }
+
+  .paginationContent {
+    gap: 0.3rem;
+    font-size: 0.75rem;
+  }
+
+  .pageButton {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+  }
 }
