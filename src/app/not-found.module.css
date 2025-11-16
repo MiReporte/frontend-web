@@ -1,5 +1,6 @@
 .notFound {
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   height: 100vh;
@@ -48,4 +49,24 @@
   height: 24px;
   cursor: pointer;
   transform: rotate(180deg);
+}
+
+@media (max-width: 768px) {
+  .notFound {
+    flex-direction: column;
+    padding: 1rem;
+  }
+
+  .textContainer {
+    margin-left: 0;
+    margin-top: 2rem;
+  }
+
+  .title {
+    font-size: 4rem;
+  }
+
+  .image {
+    width: 240px;
+  }
 }
