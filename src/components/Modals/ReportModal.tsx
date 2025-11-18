@@ -107,7 +107,6 @@ export function ReportModal({ reportId, onClose }: ReportProps) {
               <p>
                 {new Date(reportData.date).toLocaleString("es-MX", {
                   dateStyle: "medium",
-                  timeStyle: "short",
                 })}
               </p>
             </div>
