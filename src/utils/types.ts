@@ -68,3 +68,36 @@ export interface UpdateStateBody {
 export interface UpdateStateResponse {
   message: string;
 }
+
+export interface SupervisorsResponse {
+  first_surname: string;
+  image: string | null;
+  name: string;
+  account_id: number;
+  counted_reports: number;
+  role: string;
+  second_surname: string;
+}
+
+export interface UpdateSupervisorReportBody {
+  report_id: number;
+  assigned_supervisor: number;
+}
+
+export interface UpdateSupervisorReportResponse {
+  message: string;
+}
+
+export interface GetReportByIdResponse {
+  assigned_supervisor: number;
+  asunto: string;
+  date: string;
+  description: string;
+  evidence: string;
+  latitude: number;
+  longitude: number;
+  report_id: number;
+  reporting_user: number;
+  status: string;
+  typereport: string;
+}

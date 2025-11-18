@@ -157,6 +157,12 @@
   background-color: #005bb5;
 }
 
+.activeFilter {
+  font-weight: bold;
+  color: var(--primaryColor);
+  border-bottom: 2px solid var(--primaryColor);
+}
+
 @media (max-width: 768px) {
   .filterContainer {
     gap: 8px;

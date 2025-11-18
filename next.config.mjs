@@ -5,6 +5,15 @@ const nextConfig = {
     "http://127.0.0.1:3000",
     "http://192.168.0.15:3000",
   ],
+
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
+    ],
+  },
 };
 
 export default nextConfig;
