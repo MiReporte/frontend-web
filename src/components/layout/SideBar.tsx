@@ -1,12 +1,10 @@
 "use client";
-
 import { rolePermissions } from "@/lib/permissions";
 import { useAuth } from "@/hooks/useAuth";
 import { usePathname } from "next/navigation";
-import styles from "@/components/layout/SideBar.module.css";
 import Link from "next/link";
 import Image from "next/image";
-import Mireporte from "@/assets/MiReporte.svg";
+import Mireporte from "@/assets/MiReporte.png";
 import Resumen from "@/assets/Resumen.svg";
 import Analisis from "@/assets/Analisis.svg";
 import Reportes from "@/assets/Reportes.svg";
@@ -16,128 +14,133 @@ import Profile from "@/assets/Profile.svg";
 
 export function Sidebar() {
   const { user } = useAuth();
+
   const pathname = usePathname();
 
   if (!user || user.role === "Usuario ciudadano") return null;
 
   const permissions = rolePermissions[user.role];
+  const menuItems = [
+    {
+      key: "resumen",
+      href: "/dashboard/resumen",
+      label: "Resumen",
+      icon: Resumen,
+    },
+    {
+      key: "analisis",
+      href: "/dashboard/analisis",
+      label: "Análisis",
+      icon: Analisis,
+    },
+    {
+      key: "reportes",
+      href: "/dashboard/reportes",
+      label: "Reportes",
+      icon: Reportes,
+    },
+    {
+      key: "usuarios",
+      href: "/dashboard/usuarios",
+      label: "Usuarios",
+      icon: Usuarios,
+    },
+    {
+      key: "conceptos",
+      href: "/dashboard/conceptos",
+      label: "Conceptos",
+      icon: Conceptos,
+    },
+  ];
 
   return (
-    <aside className={styles.sidebar}>
-      <Link href="/dashboard">
-        <Image
-          src={Mireporte}
-          alt="Mi Reporte Logo"
-          className={styles.logo}
-          width={200}
-          height={100}
-        />
-      </Link>
-
-      <ul className={styles.list}>
-        {permissions.includes("resumen") && (
-          <li className={styles.listItem}>
-            <Link
-              href="/dashboard/resumen"
-              className={`${styles.link} ${
-                pathname === "/dashboard/resumen" ? styles.active : ""
-              }`}
-            >
+    <aside
+      className="sidebar offcanvas-md offcanvas-start text-white d-flex flex-column p-3 border-end border-white border-opacity-10 shadow-sm"
+      tabIndex={-1}
+      id="sidebarMenu"
+      aria-labelledby="sidebarMenuLabel"
+      style={{
+        width: "260px",
+      }}
+    >
+      <div className="offcanvas-header mb-3">
+        <h5 className="offcanvas-title text-white" id="sidebarMenuLabel">
+          Menú
+        </h5>
+        <button
+          type="button"
+          className="btn-close btn-close-white"
+          data-bs-dismiss="offcanvas"
+          data-bs-target="#sidebarMenu"
+          aria-label="Cerrar menú"
+        ></button>
+      </div>
+      <div className="offcanvas-body d-flex flex-column h-100 justify-content-between p-0">
+        <div>
+          <div className="mb-4 text-center px-2">
+            <Link href="/dashboard">
               <Image
-                src={Resumen}
-                alt="Icono Resumen"
-                width={32}
-                height={32}
-                className={styles.icon}
+                src={Mireporte}
+                alt="Mi Reporte Logo"
+                style={{
+                  objectFit: "contain",
+                  height: "auto",
+                  maxWidth: "100%",
+                }}
+                width={180}
+                height={90}
               />
-              <span>Resumen</span>
             </Link>
-          </li>
-        )}
-        {permissions.includes("analisis") && (
-          <li className={styles.listItem}>
-            <Link
-              href="/dashboard/analisis"
-              className={`${styles.link} ${
-                pathname === "/dashboard/analisis" ? styles.active : ""
-              }`}
-            >
-              <Image
-                src={Analisis}
-                alt="Icono Análisis"
-                width={32}
-                height={32}
-                className={styles.icon}
-              />
-              <span>Análisis</span>
-            </Link>
-          </li>
-        )}
-        {permissions.includes("reportes") && (
-          <li className={styles.listItem}>
-            <Link
-              href="/dashboard/reportes"
-              className={`${styles.link} ${
-                pathname === "/dashboard/reportes" ? styles.active : ""
-              }`}
-            >
-              <Image
-                src={Reportes}
-                alt="Icono Reportes"
-                width={32}
-                height={32}
-                className={styles.icon}
-              />
-              <span>Reportes</span>
-            </Link>
-          </li>
-        )}
-        {permissions.includes("usuarios") && (
-          <li className={styles.listItem}>
-            <Link
-              href="/dashboard/usuarios"
-              className={`${styles.link} ${
-                pathname === "/dashboard/usuarios" ? styles.active : ""
-              }`}
-            >
-              <Image
-                src={Usuarios}
-                alt="Icono Usuarios"
-                width={32}
-                height={32}
-                className={styles.icon}
-              />
-              <span>Usuarios</span>
-            </Link>
-          </li>
-        )}
-        {permissions.includes("conceptos") && (
-          <li className={styles.listItem}>
-            <Link
-              href="/dashboard/conceptos"
-              className={`${styles.link} ${
-                pathname === "/dashboard/conceptos" ? styles.active : ""
-              }`}
-            >
-              <Image
-                src={Conceptos}
-                alt="Icono Conceptos"
-                width={32}
-                height={32}
-                className={styles.icon}
-              />
-              <span>Conceptos</span>
-            </Link>
-          </li>
-        )}
-      </ul>
-      <Link href="/dashboard/profile" className={styles.userInfo}>
-        <Image src={Profile} alt="Icono Perfil" width={32} height={32} />
-        <div className={styles.userDetails}>
-          <p>{user.name}</p>
-          <p>{user.email}</p>
+          </div>
         </div>
-      </Link>
+        <nav className="nav flex-column gap-2">
+          {menuItems.map(
+            (item) =>
+              permissions.includes(item.key) && (
+                <Link
+                  key={item.key}
+                  href={item.href}
+                  className={`nav-link-custom ${
+                    pathname === item.href ? "active" : ""
+                  }`}
+                >
+                  <Image
+                    src={item.icon}
+                    alt={`Icono ${item.label}`}
+                    width={32}
+                    height={32}
+                  />
+                  <span className="fs-5">{item.label}</span>
+                </Link>
+              )
+          )}
+        </nav>
+
+        <div className="mt-4 pt-3 border-top border-white border-opacity-25">
+          <Link
+            href="/dashboard/profile"
+            className="d-flex align-items-center gap-3 text-white text-decoration-none p-2 rounded hover-bg-light-10"
+          >
+            <Image
+              src={user.image ?? Profile}
+              alt={
+                user.image
+                  ? `${user.name} ${user.first_surname}`
+                  : "Icono Perfil"
+              }
+              width={36}
+              height={36}
+              className="rounded-circle"
+            />
+            <div className="d-flex flex-column overflow-hidden">
+              <span className="fw-bold text-truncate">{user.name}</span>
+              <span className="small text-white-50 text-truncate">
+                {user.email}
+              </span>
+            </div>
+          </Link>
+        </div>
+      </div>
     </aside>
   );
 }

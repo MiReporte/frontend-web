@@ -1,4 +1,6 @@
 import "@/app/globals.css";
+import "bootstrap/dist/css/bootstrap.min.css";
+import BootstrapClient from "@/components/BootstrapClient";
 import { AuthProvider } from "@/lib/authContext";
 
 export const metadata = {
@@ -12,8 +14,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body>
-        <AuthProvider>{children}</AuthProvider>
+      <body className="overflow-hidden">
+        <AuthProvider>
+          <div className="d-flex min-vh-100 flex-column flex-md-row overflow-hidden">
+            {children}
+          </div>
+        </AuthProvider>
+        <BootstrapClient />
       </body>
     </html>
   );

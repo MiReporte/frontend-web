@@ -6,14 +6,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { GetReportByIdResponse } from "@/utils/types";
 import { reverseGeocode } from "@/utils/reverseGeocoding";
 import Image from "next/image";
-import styles from "@/components/Modals/ReportModal.module.css";
 
 interface ReportProps {
   reportId: number;
   onClose: () => void;
 }
 
-// Cache para no repetir geocoding
 const addressCache = new Map<string, string>();
 
 export function ReportModal({ reportId, onClose }: ReportProps) {
@@ -35,7 +33,6 @@ export function ReportModal({ reportId, onClose }: ReportProps) {
       }
 
       setLoading(true);
-
       const data = await getReportById(reportId, user.token);
 
       if (!data) {
@@ -47,7 +44,6 @@ export function ReportModal({ reportId, onClose }: ReportProps) {
       setReportData(data);
 
       const key = `${data.latitude},${data.longitude}`;
-
       if (addressCache.has(key)) {
         setAddress(addressCache.get(key) as string);
       } else {
@@ -59,7 +55,6 @@ export function ReportModal({ reportId, onClose }: ReportProps) {
           setAddress("Sin ubicación disponible");
         }
       }
-
       setLoading(false);
     };
 
@@ -67,79 +62,117 @@ export function ReportModal({ reportId, onClose }: ReportProps) {
   }, [reportId, user?.token]);
 
   return (
-    <div className={styles.overlay}>
-      <div className={styles.modal}>
-        <h3>Detalle del reporte</h3>
-
-        {/* Loading */}
-        {loading && <p>Cargando información...</p>}
-
-        {/* Error */}
-        {error && <p className={styles.errorText}>{error}</p>}
-
-        {/* Contenido */}
-        {!loading && !error && reportData && (
-          <div className={styles.reportDetails}>
-            <div className={styles.headerSection}>
-              <span>
-                <strong>Folio</strong>
-                <p>{reportData.report_id}</p>
-              </span>
-
-              <span>
-                <strong>Tipo</strong>
-                <p>{reportData.asunto}</p>
-              </span>
-
-              <span>
-                <strong>Estado</strong>
-                <p>{reportData.status}</p>
-              </span>
-            </div>
-
-            <div className={styles.addressSection}>
-              <strong>Ubicación</strong>
-              <p>{address}</p>
-            </div>
-
-            <div className={styles.dateSection}>
-              <strong>Fecha</strong>
-              <p>
-                {new Date(reportData.date).toLocaleString("es-MX", {
-                  dateStyle: "medium",
-                })}
-              </p>
-            </div>
-
-            <div className={styles.picSection}>
-              <strong>Foto</strong>
-
-              {reportData.evidence &&
-              typeof reportData.evidence === "string" &&
-              reportData.evidence.startsWith("http") ? (
-                <Image
-                  src={reportData.evidence}
-                  alt="Foto del reporte"
-                  width={200}
-                  height={200}
-                />
-              ) : (
-                <p>No hay foto disponible</p>
-              )}
-            </div>
-
-            <div className={styles.descriptionSection}>
-              <strong>Descripción</strong>
-              <p>{reportData.description}</p>
-            </div>
+    <div
+      className="modal fade show d-block"
+      tabIndex={-1}
+      style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1060 }}
+    >
+      <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div className="modal-content border-0 shadow rounded-4">
+          <div className="modal-header bg-white border-bottom-0">
+            <h4 className="modal-title fw-bold" style={{ color: "#611232" }}>
+              Detalle del Reporte #{reportId}
+            </h4>
           </div>
-        )}
 
-        {/* Botón Salir */}
-        <div className={styles.actions}>
-          <button className={styles.cancelButton} onClick={onClose}>
-            Aceptar
-          </button>
+          <div className="modal-body px-4 py-2">
+            {loading ? (
+              <div className="text-center py-5">
+                <div className="spinner-border text-danger" role="status">
+                  <span className="visually-hidden">Cargando...</span>
+                </div>
+                <p className="mt-2 text-muted">Obteniendo datos...</p>
+              </div>
+            ) : error ? (
+              <div className="alert alert-danger text-center" role="alert">
+                {error}
+              </div>
+            ) : reportData ? (
+              <div className="container-fluid">
+                <div className="row g-3 mb-4">
+                  <div className="col-md-4">
+                    <label className="text-muted small fw-bold text-uppercase">
+                      Tipo
+                    </label>
+                    <p className="fs-6 mb-0 text-dark">{reportData.asunto}</p>
+                  </div>
+                  <div className="col-md-4">
+                    <label className="text-muted small fw-bold text-uppercase">
+                      Estado
+                    </label>
+                    <p className="fs-6 mb-0 text-dark">{reportData.status}</p>
+                  </div>
+                  <div className="col-md-4">
+                    <label className="text-muted small fw-bold text-uppercase">
+                      Fecha
+                    </label>
+                    <p className="fs-6 mb-0 text-dark">
+                      {new Date(reportData.date).toLocaleString("es-MX", {
+                        dateStyle: "long",
+                      })}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="row g-4">
+                  <div className="col-md-7">
+                    <div className="mb-4">
+                      <label className="text-muted small fw-bold text-uppercase">
+                        Ubicación
+                      </label>
+                      <div className="d-flex align-items-center gap-2 bg-light p-2 rounded">
+                        <p className="mb-0 small text-secondary">{address}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-muted small fw-bold text-uppercase">
+                        Descripción Ciudadana
+                      </label>
+                      <div className="d-flex align-items-center gap-2 bg-light p-2 rounded">
+                        <p className="mb-0 fst-italic text-dark">
+                          {reportData.description}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="col-md-5">
+                    <label className="text-muted small fw-bold text-uppercase mb-2">
+                      Evidencia
+                    </label>
+                    <div className="ratio ratio-1x1 bg-light rounded-3 overflow-hidden border position-relative">
+                      {reportData.evidence &&
+                      typeof reportData.evidence === "string" &&
+                      reportData.evidence.startsWith("http") ? (
+                        <Image
+                          src={reportData.evidence}
+                          alt="Evidencia"
+                          fill
+                          className="object-fit-cover"
+                        />
+                      ) : (
+                        <div className="d-flex align-items-center justify-content-center h-100 text-muted">
+                          <small>Sin evidencia fotográfica</small>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="modal-footer border-top-0 justify-content-center">
+            <button
+              type="button"
+              className="btn text-white rounded-pill px-4 fw-bold"
+              style={{ backgroundColor: "#611232", border: "none" }}
+              onClick={onClose}
+            >
+              Cerrar
+            </button>
+          </div>
         </div>
       </div>
     </div>
