@@ -214,66 +214,68 @@ export default function ReportesPage() {
                     </td>
                   </tr>
                 ) : reports.length > 0 ? (
-                  reports.map((report) => (
-                    <tr key={report.report_id} style={{ cursor: "default" }}>
-                      <td className="ps-3 fw-medium text-dark">
-                        {report.report_id}
-                      </td>
-                      <td className="text-dark">{report.typereport}</td>
-                      <td
-                        className="text-secondary small text-truncate"
-                        style={{ maxWidth: "250px" }}
-                      >
-                        {report.address || "Cargando..."}
-                      </td>
-                      <td className="text-dark small">{report.date}</td>
+                  reports
+                    .sort((a, b) => b.report_id - a.report_id)
+                    .map((report) => (
+                      <tr key={report.report_id} style={{ cursor: "default" }}>
+                        <td className="ps-3 fw-medium text-dark">
+                          {report.report_id}
+                        </td>
+                        <td className="text-dark">{report.typereport}</td>
+                        <td
+                          className="text-secondary small text-truncate"
+                          style={{ maxWidth: "250px" }}
+                        >
+                          {report.address || "Cargando..."}
+                        </td>
+                        <td className="text-dark small">{report.date}</td>
 
-                      <td>
-                        <NewStateSelector
-                          reportId={report.report_id}
-                          currentStatus={report.status}
-                        />
-                      </td>
+                        <td>
+                          <NewStateSelector
+                            reportId={report.report_id}
+                            currentStatus={report.status}
+                          />
+                        </td>
 
-                      <td className="text-end pe-3">
-                        <div className="d-flex justify-content-start align-items-center gap-3">
-                          <button
-                            onClick={() => OpenModalReport(report.report_id)}
-                            className="btn btn-sm rounded-pill d-flex align-items-center text-dark"
-                            style={{
-                              backgroundColor: "#f5f5f5ff",
-                            }}
-                          >
-                            <i className="bi bi-eye-fill fs-5 text-dark"></i>
-                          </button>
+                        <td className="text-end pe-3">
+                          <div className="d-flex justify-content-start align-items-center gap-3">
+                            <button
+                              onClick={() => OpenModalReport(report.report_id)}
+                              className="btn btn-sm rounded-pill d-flex align-items-center text-dark"
+                              style={{
+                                backgroundColor: "#f5f5f5ff",
+                              }}
+                            >
+                              <i className="bi bi-eye-fill fs-5 text-dark"></i>
+                            </button>
 
-                          <button
-                            className="btn btn-sm rounded-pill d-flex align-items-center text-dark"
-                            style={{
-                              backgroundColor: "#f5f5f5ff",
-                            }}
-                          >
-                            <i className="bi bi-file-earmark-text-fill fs-5 text-dark"></i>
-                          </button>
+                            <button
+                              className="btn btn-sm rounded-pill d-flex align-items-center text-dark"
+                              style={{
+                                backgroundColor: "#f5f5f5ff",
+                              }}
+                            >
+                              <i className="bi bi-file-earmark-text-fill fs-5 text-dark"></i>
+                            </button>
 
-                          <button
-                            onClick={() =>
-                              OpenModalSupervisor(
-                                report.report_id,
-                                report.assigned_supervisor
-                              )
-                            }
-                            className="btn btn-sm rounded-pill d-flex align-items-center text-dark"
-                            style={{
-                              backgroundColor: "#f5f5f5ff",
-                            }}
-                          >
-                            <i className="bi bi-file-person-fill fs-5 text-dark"></i>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                            <button
+                              onClick={() =>
+                                OpenModalSupervisor(
+                                  report.report_id,
+                                  report.assigned_supervisor
+                                )
+                              }
+                              className="btn btn-sm rounded-pill d-flex align-items-center text-dark"
+                              style={{
+                                backgroundColor: "#f5f5f5ff",
+                              }}
+                            >
+                              <i className="bi bi-file-person-fill fs-5 text-dark"></i>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
                 ) : (
                   <tr>
                     <td colSpan={6} className="text-center py-5 text-muted">
