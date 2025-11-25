@@ -25,6 +25,15 @@ const STATUS_API: Record<string, string> = {
   Cerrado: "CIERRE",
 };
 
+const API_TO_UI: Record<string, string> = {
+  REVISION: "En revisión",
+  APROBADO: "Aprobado",
+  NO_APROBADO: "No aprobado",
+  PROCESO: "En proceso",
+  COMPLETADO: "Completado",
+  CIERRE: "Cierre técnico",
+};
+
 const PERMISSION_REQUIRED: Record<string, string[]> = {
   Administrador: [
     "REVISION",
@@ -50,13 +59,15 @@ export function NewStateSelector({
   onUpdated,
 }: Props) {
   const { user } = useAuth();
-  const [status, setStatus] = useState(currentStatus);
+  const [status, setStatus] = useState(
+    API_TO_UI[currentStatus] || currentStatus
+  );
   const [loading, setLoading] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    setStatus(currentStatus);
+    setStatus(API_TO_UI[currentStatus] || currentStatus);
   }, [currentStatus]);
 
   const handleChange = (newStatusUI: string) => {
@@ -87,9 +98,6 @@ export function NewStateSelector({
     }
   };
 
-  const handleCancelUpdate = () => setPendingStatus(null);
-  const handleCloseAlert = () => setAlertMessage(null);
-
   const selectClass =
     (status === "En revisión" && styles.statusEnRevision) ||
     (status === "Aprobado" && styles.statusAprobado) ||
@@ -101,33 +109,39 @@ export function NewStateSelector({
 
   return (
     <>
-      <select
-        value={status}
-        disabled={loading}
-        onChange={(e) => handleChange(e.target.value)}
-        className={`${selectClass} ${styles.select}`}
-      >
-        {UI_STATUS.map((label) => (
-          <option key={label} value={label} className={styles.option}>
-            {label}
-          </option>
-        ))}
-      </select>
+      <div className="d-inline-block">
+        <div className="selectWrapper">
+          <select
+            value={status}
+            disabled={loading}
+            onChange={(e) => handleChange(e.target.value)}
+            className={`form-select fw-bold rounded-pill px-3 py-1 text-white noArrow ${selectClass}`}
+            style={{ width: "10rem" }}
+          >
+            {UI_STATUS.map((label) => (
+              <option key={label} value={label}>
+                {label}
+              </option>
+            ))}
+          </select>
+          <i className="bi bi-chevron-down selectIcon"></i>
+        </div>
+      </div>
 
       {pendingStatus && (
         <ConfirmUpdate
-          messageTitle={"¿Está seguro de actualizar el estado?"}
-          message={`El reporte cambiara al estado "${pendingStatus}".`}
+          messageTitle="¿Está seguro de actualizar el estado?"
+          message={`El reporte cambiará al estado "${pendingStatus}".`}
           onConfirm={handleConfirmUpdate}
-          onCancel={handleCancelUpdate}
+          onCancel={() => setPendingStatus(null)}
         />
       )}
 
       {alertMessage && (
         <Alert
-          messageTitle="Lo sentimos"
+          messageTitle="Aviso"
           message={alertMessage}
-          onClose={handleCloseAlert}
+          onClose={() => setAlertMessage(null)}
         />
       )}
     </>

@@ -8,13 +8,8 @@ import { reverseGeocode } from "@/utils/reverseGeocoding";
 import { NewStateSelector } from "@/components/NewStateSelector";
 import { UpdateSupervisorModal } from "@/components/Modals/UpdateSupervisorModal";
 import { ReportModal } from "@/components/Modals/ReportModal";
-import Image from "next/image";
 import ProtectedPage from "@/components/ProtectedPage";
 import LoadingImage from "@/components/LoadingImage";
-import EyeIcon from "@/assets/EyeOutline.svg";
-import CatalogIcon from "@/assets/TextFile.svg";
-import SupervisorIcon from "@/assets/Worker.svg";
-import styles from "@/app/dashboard/reportes/reportesPage.module.css";
 
 export default function ReportesPage() {
   const [reports, setReports] = useState<
@@ -38,7 +33,6 @@ export default function ReportesPage() {
   const limit = 10;
 
   const addressCache = useRef(new Map<string, string>());
-
   const [currentStatus, setCurrentStatus] = useState("");
 
   const fetchReports = async (page: number, status = "") => {
@@ -51,24 +45,17 @@ export default function ReportesPage() {
 
       for (let i = 0; i < data.items.length; i += concurrency) {
         const batch = data.items.slice(i, i + concurrency);
-
         const batchResults = await Promise.all(
           batch.map(async (report) => {
             const key = `${report.latitude},${report.longitude}`;
-
             if (addressCache.current.has(key)) {
-              return {
-                ...report,
-                address: addressCache.current.get(key),
-              };
+              return { ...report, address: addressCache.current.get(key) };
             }
-
             try {
               const address = await reverseGeocode(
                 report.latitude,
                 report.longitude
               );
-
               addressCache.current.set(key, address);
               return { ...report, address };
             } catch {
@@ -76,12 +63,9 @@ export default function ReportesPage() {
             }
           })
         );
-
         results.push(...batchResults);
-
         await new Promise((r) => setTimeout(r, 80));
       }
-
       setReports(results);
       setTotalPages(data.totalPages);
     } catch (err: unknown) {
@@ -91,35 +75,22 @@ export default function ReportesPage() {
     }
   };
 
-  // -----------------------------
-  // Efecto principal
-  // -----------------------------
   useEffect(() => {
     fetchReports(currentPage, currentStatus);
   }, [currentPage, currentStatus]);
 
-  // -----------------------------
-  // Handlers de paginación
-  // -----------------------------
   const handlePrevPage = () => {
     if (currentPage > 1) setCurrentPage((p) => p - 1);
   };
-
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage((p) => p + 1);
   };
 
-  // -----------------------------
-  // Handler de filtros
-  // -----------------------------
   const handleSwitch = (status: string) => () => {
     setCurrentStatus(status);
     setCurrentPage(1);
   };
 
-  // -----------------------------
-  // Modales
-  // -----------------------------
   const OpenModalSupervisor = (
     reportId: number,
     supervisorId: number | null
@@ -127,205 +98,244 @@ export default function ReportesPage() {
     setShowUpdateSupervisorModal({ reportId, supervisorId });
   };
 
-  const CloseModalSupervisor = () => {
-    setShowUpdateSupervisorModal(null);
-  };
-
   const OpenModalReport = (reportId: number) => {
     setShowReportModal({ reportId });
   };
 
-  const CloseModalReport = () => {
-    setShowReportModal(null);
+  const refreshReports = () => {
+    fetchReports(currentPage, currentStatus);
   };
+
+  const brandColor = "#611232";
+
+  const getFilterStyle = (filterId: string) => {
+    switch (filterId) {
+      case "REVISION":
+        return { bg: "#F59E0B", text: "#fff" };
+      case "APROBADO":
+        return { bg: "#16A34A", text: "#fff" };
+      case "NO_APROBADO":
+        return { bg: "#DC2626", text: "#fff" };
+      case "PROCESO":
+        return { bg: "#ff7800", text: "#fff" };
+      case "COMPLETADO":
+        return { bg: "#2563EB", text: "#fff" };
+      case "CIERRE":
+        return { bg: "#9333EA", text: "#fff" };
+      default:
+        return { bg: brandColor, text: "#fff" };
+    }
+  };
+
+  const filters = [
+    { id: "", label: "Todos los estados" },
+    { id: "REVISION", label: "En revisión" },
+    { id: "APROBADO", label: "Aprobado" },
+    { id: "NO_APROBADO", label: "No aprobado" },
+    { id: "PROCESO", label: "En proceso" },
+    { id: "COMPLETADO", label: "Completado" },
+    { id: "CIERRE", label: "Cierre técnico" },
+  ];
 
   return (
     <ProtectedPage permission="reportes">
-      <h2>Listado de reportes</h2>
+      <div className="container-fluid py-4">
+        <div className="bg-white rounded-4 shadow-sm p-4">
+          <div className="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center mb-4 gap-3">
+            <h4 className="fw-bold m-0 text-dark">Listado de reportes</h4>
+          </div>
 
-      {/* ---------------- Filter Switch ---------------- */}
-      <div className={styles.filterContainer}>
-        <span
-          className={currentStatus === "" ? styles.activeFilter : ""}
-          onClick={handleSwitch("")}
-        >
-          Todos los estados
-        </span>
+          <div className="d-flex flex-wrap gap-2 mb-4 border-bottom pb-3">
+            {filters.map((filter) => {
+              const isActive = currentStatus === filter.id;
+              const activeStyle = getFilterStyle(filter.id);
 
-        <span
-          className={currentStatus === "REVISION" ? styles.activeFilter : ""}
-          onClick={handleSwitch("REVISION")}
-        >
-          En revisión
-        </span>
+              return (
+                <button
+                  key={filter.id}
+                  onClick={handleSwitch(filter.id)}
+                  className="btn btn-sm rounded-pill fw-medium px-3 transition-all"
+                  style={{
+                    backgroundColor: isActive ? activeStyle.bg : "#fff",
+                    color: isActive ? activeStyle.text : "#6B7280",
+                    border: isActive
+                      ? `1px solid ${activeStyle.bg}`
+                      : "1px solid #E5E7EB",
+                    boxShadow: isActive ? "0 2px 4px rgba(0,0,0,0.1)" : "none",
+                  }}
+                >
+                  {filter.label}
+                </button>
+              );
+            })}
+          </div>
 
-        <span
-          className={currentStatus === "APROBADO" ? styles.activeFilter : ""}
-          onClick={handleSwitch("APROBADO")}
-        >
-          Aprobado
-        </span>
-
-        <span
-          className={currentStatus === "NO_APROBADO" ? styles.activeFilter : ""}
-          onClick={handleSwitch("NO_APROBADO")}
-        >
-          No aprobado
-        </span>
-
-        <span
-          className={currentStatus === "COMPLETADO" ? styles.activeFilter : ""}
-          onClick={handleSwitch("COMPLETADO")}
-        >
-          Completado
-        </span>
-
-        <span
-          className={currentStatus === "CIERRE" ? styles.activeFilter : ""}
-          onClick={handleSwitch("CIERRE")}
-        >
-          Cierre técnico
-        </span>
-      </div>
-
-      {/* ---------------- Table ---------------- */}
-      <table className={styles.reportTable}>
-        <thead className={styles.tableHead}>
-          <tr>
-            <th className={styles.tableCell}>ID</th>
-            <th className={styles.tableCell}>Tipo</th>
-            <th className={styles.tableCell}>Ubicación</th>
-            <th className={styles.tableCell}>Fecha</th>
-            <th className={styles.tableCell}>Estado</th>
-            <th className={styles.tableCell}>Acciones</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {loading ? (
-            <tr>
-              <td colSpan={6} className={styles.loadingCell}>
-                <LoadingImage />
-              </td>
-            </tr>
-          ) : error ? (
-            <tr>
-              <td colSpan={6} className={styles.errorCell}>
-                Error: {error}
-              </td>
-            </tr>
-          ) : reports.length > 0 ? (
-            reports.map((report) => (
-              <tr key={report.report_id}>
-                <td className={styles.cellReport}>{report.report_id}</td>
-                <td className={styles.cellReport}>{report.typereport}</td>
-
-                <td className={styles.cellReport}>
-                  {report.address
-                    ? `${report.address.slice(0, 24)}...`
-                    : "Cargando..."}
-                </td>
-
-                <td className={styles.cellReport}>{report.date}</td>
-
-                <td className={styles.cellReport}>
-                  <NewStateSelector
-                    reportId={report.report_id}
-                    currentStatus={report.status}
-                  />
-                </td>
-
-                <td className={styles.cellReport}>
-                  <span
-                    className={styles.buttonVer}
-                    onClick={() => OpenModalReport(report.report_id)}
+          <div className="table-responsive">
+            <table className="table table-hover align-middle">
+              <thead
+                className="border-light sticky-top bg-white"
+                style={{ zIndex: 1, top: 0 }}
+              >
+                <tr>
+                  <th className="text-secondary fw-normal small ps-3 bg-white">
+                    ID
+                  </th>
+                  <th className="text-secondary fw-normal small bg-white">
+                    Tipo
+                  </th>
+                  <th
+                    className="text-secondary fw-normal small bg-white"
+                    style={{ minWidth: "200px" }}
                   >
-                    <Image src={EyeIcon} alt="Ver" width={16} height={16} /> Ver
-                  </span>
+                    Ubicación
+                  </th>
+                  <th className="text-secondary fw-normal small bg-white">
+                    Fecha
+                  </th>
+                  <th className="text-secondary fw-normal small bg-white">
+                    Estado
+                  </th>
+                  <th className="text-secondary fw-normal small pe-4 bg-white">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-5">
+                      <LoadingImage />
+                    </td>
+                  </tr>
+                ) : error ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-5 text-danger">
+                      {error}
+                    </td>
+                  </tr>
+                ) : reports.length > 0 ? (
+                  reports.map((report) => (
+                    <tr key={report.report_id} style={{ cursor: "default" }}>
+                      <td className="ps-3 fw-medium text-dark">
+                        {report.report_id}
+                      </td>
+                      <td className="text-dark">{report.typereport}</td>
+                      <td
+                        className="text-secondary small text-truncate"
+                        style={{ maxWidth: "250px" }}
+                      >
+                        {report.address || "Cargando..."}
+                      </td>
+                      <td className="text-dark small">{report.date}</td>
 
-                  <span className={styles.buttonCatalogo}>
-                    <Image
-                      src={CatalogIcon}
-                      alt="Catalogo"
-                      width={16}
-                      height={16}
-                    />
-                    Catalogo
-                  </span>
+                      <td>
+                        <NewStateSelector
+                          reportId={report.report_id}
+                          currentStatus={report.status}
+                        />
+                      </td>
 
-                  <span
-                    className={styles.buttonSupervisor}
-                    onClick={() =>
-                      OpenModalSupervisor(
-                        report.report_id,
-                        report.assigned_supervisor
-                      )
-                    }
-                  >
-                    <Image
-                      src={SupervisorIcon}
-                      alt="Supervisor"
-                      width={16}
-                      height={16}
-                    />
-                    Supervisor
-                  </span>
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan={6} style={{ textAlign: "center", padding: "1rem" }}>
-                No hay reportes disponibles
-              </td>
-            </tr>
-          )}
+                      <td className="text-end pe-3">
+                        <div className="d-flex justify-content-start align-items-center gap-3">
+                          <button
+                            onClick={() => OpenModalReport(report.report_id)}
+                            className="btn btn-sm rounded-pill d-flex align-items-center text-dark"
+                            style={{
+                              backgroundColor: "#f5f5f5ff",
+                            }}
+                          >
+                            <i className="bi bi-eye-fill fs-5 text-dark"></i>
+                          </button>
+
+                          <button
+                            className="btn btn-sm rounded-pill d-flex align-items-center text-dark"
+                            style={{
+                              backgroundColor: "#f5f5f5ff",
+                            }}
+                          >
+                            <i className="bi bi-file-earmark-text-fill fs-5 text-dark"></i>
+                          </button>
+
+                          <button
+                            onClick={() =>
+                              OpenModalSupervisor(
+                                report.report_id,
+                                report.assigned_supervisor
+                              )
+                            }
+                            className="btn btn-sm rounded-pill d-flex align-items-center text-dark"
+                            style={{
+                              backgroundColor: "#f5f5f5ff",
+                            }}
+                          >
+                            <i className="bi bi-file-person-fill fs-5 text-dark"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="text-center py-5 text-muted">
+                      No hay reportes disponibles
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
 
           {!loading && (
-            <tr>
-              <td colSpan={6} className={styles.paginationContainer}>
-                <div className={styles.paginationContent}>
-                  <button
-                    onClick={handlePrevPage}
-                    disabled={currentPage === 1}
-                    className={styles.pageButton}
-                  >
-                    Anterior
-                  </button>
+            <div className="d-flex justify-content-center align-items-center gap-3 mt-4">
+              <button
+                onClick={handlePrevPage}
+                disabled={currentPage === 1}
+                className="btn btn-light rounded-pill px-3 text-secondary btn-sm border"
+              >
+                Anterior
+              </button>
 
-                  <span>
-                    Página {currentPage} de {totalPages}
-                  </span>
+              <div className="d-flex gap-1 align-items-center">
+                <span
+                  className="d-flex justify-content-center align-items-center rounded-circle text-white small"
+                  style={{
+                    width: "28px",
+                    height: "28px",
+                    backgroundColor: brandColor,
+                  }}
+                >
+                  {currentPage}
+                </span>
+                <span className="text-muted small mx-1">de {totalPages}</span>
+              </div>
 
-                  <button
-                    onClick={handleNextPage}
-                    disabled={currentPage === totalPages}
-                    className={styles.pageButton}
-                  >
-                    Siguiente
-                  </button>
-                </div>
-              </td>
-            </tr>
+              <button
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+                className="btn btn-light rounded-pill px-3 text-secondary btn-sm border"
+              >
+                Siguiente
+              </button>
+            </div>
           )}
-        </tbody>
-      </table>
+        </div>
 
-      {/* ---------------- Modals ---------------- */}
-      {showUpdateSupervisorModal && (
-        <UpdateSupervisorModal
-          reportId={showUpdateSupervisorModal.reportId}
-          supervisorId={showUpdateSupervisorModal.supervisorId}
-          onClose={CloseModalSupervisor}
-        />
-      )}
+        {showUpdateSupervisorModal && (
+          <UpdateSupervisorModal
+            reportId={showUpdateSupervisorModal.reportId}
+            supervisorId={showUpdateSupervisorModal.supervisorId}
+            onClose={() => setShowUpdateSupervisorModal(null)}
+            onUpdated={refreshReports}
+          />
+        )}
 
-      {showReportModal && (
-        <ReportModal
-          reportId={showReportModal.reportId}
-          onClose={CloseModalReport}
-        />
-      )}
+        {showReportModal && (
+          <ReportModal
+            reportId={showReportModal.reportId}
+            onClose={() => setShowReportModal(null)}
+          />
+        )}
+      </div>
     </ProtectedPage>
   );
 }

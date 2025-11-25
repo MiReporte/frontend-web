@@ -8,6 +8,7 @@ export interface LoginResponse {
   expiration: number;
   user: {
     person_id: number;
+    image: string | null;
     name: string;
     first_surname: string;
     second_surname: string;
@@ -19,6 +20,7 @@ export interface LoginResponse {
 export interface User {
   token: string;
   name: string;
+  image: string | null;
   expiration: number;
   first_surname: string;
   second_surname: string;

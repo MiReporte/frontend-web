@@ -1,38 +1,28 @@
-.select {
-  font-weight: bold;
-  color: #f2f2f2;
-  border-radius: 5px;
-  padding: 4px 8px;
-  font-size: 1rem;
-  border-style: none;
-}
-
 .statusEnRevision {
-  background-color: #fdbb40;
+  background-color: #f59e0b !important;
 }
 
 .statusAprobado {
-  background-color: #22c55e;
+  background-color: #16a34a !important;
 }
 
 .statusNoAprobado {
-  background-color: #f63be6;
+  background-color: #dc2626 !important;
 }
 
 .statusEnProceso {
-  background-color: #ff7800;
+  background-color: #ff7800 !important;
 }
 
 .statusCompletado {
-  background-color: #3b82f6;
+  background-color: #2563eb !important;
 }
 
 .statusCierreTecnico {
-  background-color: #6b7280;
+  background-color: #9333ea !important;
 }
 
-.option {
-  font-weight: normal;
-  color: #000000;
-  background-color: #f2f2f2;
+.options {
+  background-color: #ffffff !important;
+  color: #000000 !important;
 }

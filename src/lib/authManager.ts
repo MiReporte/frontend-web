@@ -43,6 +43,7 @@ export const AuthManager = {
       const user: User = {
         token: data.token,
         expiration: data.expiration,
+        image: data.user.image,
         name: data.user.name,
         first_surname: data.user.first_surname,
         second_surname: data.user.second_surname,
