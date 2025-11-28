@@ -35,33 +35,33 @@ function ProfileInner() {
     setDeleteId(member.account_id);
   };
 
+  const reloadStaff = async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+      const data = await getStaff(user.token);
+
+      const combined = [
+        ...(data.mesa_servicios ?? []),
+        ...(data.supervisors ?? []),
+      ];
+
+      const activeStaff = combined.filter(
+        (item) => item.account_status === "ACTIVE"
+      );
+
+      setStaff(activeStaff);
+    } catch (err) {
+      console.error("Error reloading staff:", err);
+      setError("Error al recargar usuarios.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchStaff = async () => {
-      if (!user) return;
-      try {
-        setLoading(true);
-
-        const data = await getStaff(user.token);
-
-        const combined = [
-          ...(data.mesa_servicios ?? []),
-          ...(data.supervisors ?? []),
-        ];
-
-        const activeStaff = combined.filter(
-          (item) => item.account_status === "ACTIVE"
-        );
-
-        setStaff(activeStaff);
-      } catch (err) {
-        console.error("Error fetching staff:", err);
-        setError("Error al cargar los usuarios.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStaff();
+    reloadStaff();
   }, [user]);
 
   return (
@@ -76,6 +76,7 @@ function ProfileInner() {
             Agregar Usuario
           </button>
         </div>
+
         <div className="table-responsive">
           <table className="table table-hover align-middle">
             <thead
@@ -158,23 +159,20 @@ function ProfileInner() {
       )}
 
       {deleteId !== null && (
-        <DeleteStaffModal userId={deleteId} onClose={() => setDeleteId(null)} />
+        <DeleteStaffModal
+          userId={deleteId}
+          onClose={async () => {
+            setDeleteId(null);
+            await reloadStaff();
+          }}
+        />
       )}
 
       {showAdd && (
         <AddStaffModal
           onClose={() => setShowAdd(false)}
-          onAdded={() => {
-            if (!user) return;
-            setLoading(true);
-            getStaff(user.token).then((data) => {
-              const combined = [
-                ...(data.mesa_servicios ?? []),
-                ...(data.supervisors ?? []),
-              ];
-              setStaff(combined);
-              setLoading(false);
-            });
+          onAdded={async () => {
+            await reloadStaff();
           }}
         />
       )}

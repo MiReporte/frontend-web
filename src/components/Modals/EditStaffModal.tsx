@@ -95,8 +95,9 @@ export function EditStaffModal({
         <div className="modal-content border-0 shadow rounded-4">
           {/* HEADER */}
           <div className="modal-header border-0">
-            <h5 className="modal-title fw-bold">Editar Usuario</h5>
-            <button className="btn-close" disabled={saving} onClick={onClose} />
+            <h5 className="modal-title fw-bold" style={{ color: "#611232" }}>
+              Editar Usuario
+            </h5>
           </div>
 
           {/* BODY */}
@@ -181,7 +182,7 @@ export function EditStaffModal({
           {/* FOOTER */}
           <div className="modal-footer border-0">
             <button
-              className="btn btn-secondary rounded-pill px-4"
+              className="btn btn-outline-secondary rounded-pill px-5 fw-medium"
               onClick={onClose}
               disabled={saving}
             >
@@ -189,7 +190,8 @@ export function EditStaffModal({
             </button>
 
             <button
-              className="btn btn-primary rounded-pill px-4"
+              className="btn text-white rounded-pill px-5 fw-medium"
+              style={{ backgroundColor: "#611232" }}
               onClick={handleSave}
               disabled={saving}
             >
