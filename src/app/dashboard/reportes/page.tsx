@@ -260,7 +260,7 @@ export default function ReportesPage() {
                           <div className="d-flex justify-content-start align-items-center gap-3">
                             <button
                               onClick={() => OpenModalReport(report.report_id)}
-                              className="btn btn-sm action-btn d-flex align-items-center"
+                              className="btn btn-sm action-btnz d-flex align-items-center"
                               data-bs-toggle="tooltip"
                               data-bs-placement="top"
                               title="Ver reporte"
@@ -275,7 +275,7 @@ export default function ReportesPage() {
                                   report.longitude
                                 )
                               }
-                              className="btn btn-sm action-btn d-flex align-items-center"
+                              className="btn btn-sm action-btnz d-flex align-items-center"
                               data-bs-toggle="tooltip"
                               data-bs-placement="top"
                               title="Ver ubicación"
@@ -284,7 +284,7 @@ export default function ReportesPage() {
                             </button>
 
                             <button
-                              className="btn btn-sm action-btn d-flex align-items-center"
+                              className="btn btn-sm action-btnz d-flex align-items-center"
                               data-bs-toggle="tooltip"
                               data-bs-placement="top"
                               title="Ver catálogo"
@@ -299,7 +299,7 @@ export default function ReportesPage() {
                                   report.assigned_supervisor
                                 )
                               }
-                              className="btn btn-sm action-btn d-flex align-items-center"
+                              className="btn btn-sm action-btnz d-flex align-items-center"
                               data-bs-toggle="tooltip"
                               data-bs-placement="top"
                               title="Ver supervisor asignado"
