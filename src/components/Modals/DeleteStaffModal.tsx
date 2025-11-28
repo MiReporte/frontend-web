@@ -63,7 +63,7 @@ export function DeleteStaffModal({
           <div className="modal-footer border-0 justify-content-center gap-3">
             <button
               type="button"
-              className="btn btn-secondary rounded-pill px-4"
+              className="btn btn-outline-secondary rounded-pill px-5 fw-medium"
               disabled={loading}
               onClick={onClose}
             >
@@ -72,7 +72,7 @@ export function DeleteStaffModal({
 
             <button
               type="button"
-              className="btn text-white rounded-pill px-4"
+              className="btn text-white rounded-pill px-5 fw-medium"
               style={{ backgroundColor: "#611232" }}
               disabled={loading}
               onClick={handleDelete}

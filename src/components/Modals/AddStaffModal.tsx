@@ -69,65 +69,65 @@ export function AddStaffModal({ onClose, onAdded }: AddStaffModalProps) {
 
           <div className="modal-body">
             <div className="mb-3">
-              <label className="form-label fw-semibold">Nombre(s)</label>
+              <label className="form-label">Nombre(s)</label>
               <input
                 type="text"
                 name="name"
-                className="form-control rounded-pill"
+                className="form-control"
                 value={form.name}
                 onChange={handleChange}
               />
             </div>
 
             <div className="mb-3">
-              <label className="form-label fw-semibold">Primer Apellido</label>
+              <label className="form-label">Primer Apellido</label>
               <input
                 type="text"
                 name="first_surname"
-                className="form-control rounded-pill"
+                className="form-control"
                 value={form.first_surname}
                 onChange={handleChange}
               />
             </div>
 
             <div className="mb-3">
-              <label className="form-label fw-semibold">Segundo Apellido</label>
+              <label className="form-label">Segundo Apellido</label>
               <input
                 type="text"
                 name="second_surname"
-                className="form-control rounded-pill"
+                className="form-control"
                 value={form.second_surname}
                 onChange={handleChange}
               />
             </div>
 
             <div className="mb-3">
-              <label className="form-label fw-semibold">Correo</label>
+              <label className="form-label">Correo</label>
               <input
                 type="email"
                 name="email"
-                className="form-control rounded-pill"
+                className="form-control"
                 value={form.email}
                 onChange={handleChange}
               />
             </div>
 
             <div className="mb-3">
-              <label className="form-label fw-semibold">Contraseña</label>
+              <label className="form-label">Contraseña</label>
               <input
                 type="password"
                 name="password"
-                className="form-control rounded-pill"
+                className="form-control"
                 value={form.password}
                 onChange={handleChange}
               />
             </div>
 
             <div className="mb-3">
-              <label className="form-label fw-semibold">Rol</label>
+              <label className="form-label">Rol</label>
               <select
                 name="role"
-                className="form-select rounded-pill"
+                className="form-select"
                 value={form.role}
                 onChange={handleChange}
               >
@@ -144,7 +144,7 @@ export function AddStaffModal({ onClose, onAdded }: AddStaffModalProps) {
           <div className="modal-footer border-0 justify-content-center gap-3">
             <button
               type="button"
-              className="btn btn-secondary rounded-pill px-4"
+              className="btn btn-outline-secondary rounded-pill px-5 fw-medium"
               disabled={loading}
               onClick={onClose}
             >
@@ -153,7 +153,7 @@ export function AddStaffModal({ onClose, onAdded }: AddStaffModalProps) {
 
             <button
               type="button"
-              className="btn text-white rounded-pill px-4"
+              className="btn text-white rounded-pill px-5 fw-medium"
               style={{ backgroundColor: "#611232" }}
               disabled={loading}
               onClick={handleAdd}
