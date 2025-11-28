@@ -89,7 +89,7 @@ input[type="password"]::-webkit-textfield-decoration-container * {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background: none !important;
+  background: none ;
   background-image: none !important;
   color: white;
 }
