@@ -25,6 +25,17 @@ export const getReports = async (
     );
 
     if (!response.ok) {
+      if (response.status === 404) {
+        // No hay reportes para este filtro
+        return {
+          items: [],
+          limit,
+          page,
+          totalItems: 1,
+          totalPages: 1,
+        };
+      }
+
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.error || "Failed to fetch reports");
     }

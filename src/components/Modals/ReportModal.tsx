@@ -69,12 +69,6 @@ export function ReportModal({ reportId, onClose }: ReportProps) {
     >
       <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div className="modal-content border-0 shadow rounded-4">
-          <div className="modal-header bg-white border-bottom-0">
-            <h4 className="modal-title fw-bold" style={{ color: "#611232" }}>
-              Detalle del Reporte #{reportId}
-            </h4>
-          </div>
-
           <div className="modal-body px-4 py-2">
             {loading ? (
               <div className="text-center py-5">

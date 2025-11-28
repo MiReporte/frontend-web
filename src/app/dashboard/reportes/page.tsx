@@ -8,6 +8,7 @@ import { reverseGeocode } from "@/utils/reverseGeocoding";
 import { NewStateSelector } from "@/components/NewStateSelector";
 import { UpdateSupervisorModal } from "@/components/Modals/UpdateSupervisorModal";
 import { ReportModal } from "@/components/Modals/ReportModal";
+import { ViewLocationReport } from "@/components/Modals/ViewLocationReport";
 import ProtectedPage from "@/components/ProtectedPage";
 import LoadingImage from "@/components/LoadingImage";
 
@@ -15,6 +16,11 @@ export default function ReportesPage() {
   const [reports, setReports] = useState<
     (ResponseReports & { address?: string })[]
   >([]);
+
+  const [showLocationReportModal, setShowLocationReportModal] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
 
   const [showUpdateSupervisorModal, setShowUpdateSupervisorModal] = useState<{
     reportId: number;
@@ -40,11 +46,18 @@ export default function ReportesPage() {
       setLoading(true);
       const data = await getReports(page, limit, status);
 
+      if (!data.items || data.items.length === 0) {
+        setReports([]);
+        setTotalPages(1);
+        return;
+      }
+
       const concurrency = 2;
       const results: (ResponseReports & { address?: string })[] = [];
 
       for (let i = 0; i < data.items.length; i += concurrency) {
         const batch = data.items.slice(i, i + concurrency);
+
         const batchResults = await Promise.all(
           batch.map(async (report) => {
             const key = `${report.latitude},${report.longitude}`;
@@ -63,12 +76,14 @@ export default function ReportesPage() {
             }
           })
         );
+
         results.push(...batchResults);
         await new Promise((r) => setTimeout(r, 80));
       }
+
       setReports(results);
       setTotalPages(data.totalPages);
-    } catch (err: unknown) {
+    } catch (err) {
       setError(getErrorMessage(err));
     } finally {
       setLoading(false);
@@ -100,6 +115,10 @@ export default function ReportesPage() {
 
   const OpenModalReport = (reportId: number) => {
     setShowReportModal({ reportId });
+  };
+
+  const OpenModalLocationReport = (latitude: number, longitude: number) => {
+    setShowLocationReportModal({ latitude, longitude });
   };
 
   const refreshReports = () => {
@@ -241,21 +260,36 @@ export default function ReportesPage() {
                           <div className="d-flex justify-content-start align-items-center gap-3">
                             <button
                               onClick={() => OpenModalReport(report.report_id)}
-                              className="btn btn-sm rounded-pill d-flex align-items-center text-dark"
-                              style={{
-                                backgroundColor: "#f5f5f5ff",
-                              }}
+                              className="btn btn-sm action-btn d-flex align-items-center"
+                              data-bs-toggle="tooltip"
+                              data-bs-placement="top"
+                              title="Ver reporte"
                             >
-                              <i className="bi bi-eye-fill fs-5 text-dark"></i>
+                              <i className="bi bi-eye-fill fs-5"></i>
                             </button>
 
                             <button
-                              className="btn btn-sm rounded-pill d-flex align-items-center text-dark"
-                              style={{
-                                backgroundColor: "#f5f5f5ff",
-                              }}
+                              onClick={() =>
+                                OpenModalLocationReport(
+                                  report.latitude,
+                                  report.longitude
+                                )
+                              }
+                              className="btn btn-sm action-btn d-flex align-items-center"
+                              data-bs-toggle="tooltip"
+                              data-bs-placement="top"
+                              title="Ver ubicación"
                             >
-                              <i className="bi bi-file-earmark-text-fill fs-5 text-dark"></i>
+                              <i className="bi bi-geo-alt-fill fs-5"></i>
+                            </button>
+
+                            <button
+                              className="btn btn-sm action-btn d-flex align-items-center"
+                              data-bs-toggle="tooltip"
+                              data-bs-placement="top"
+                              title="Ver catálogo"
+                            >
+                              <i className="bi bi-file-earmark-text-fill fs-5"></i>
                             </button>
 
                             <button
@@ -265,12 +299,12 @@ export default function ReportesPage() {
                                   report.assigned_supervisor
                                 )
                               }
-                              className="btn btn-sm rounded-pill d-flex align-items-center text-dark"
-                              style={{
-                                backgroundColor: "#f5f5f5ff",
-                              }}
+                              className="btn btn-sm action-btn d-flex align-items-center"
+                              data-bs-toggle="tooltip"
+                              data-bs-placement="top"
+                              title="Ver supervisor asignado"
                             >
-                              <i className="bi bi-file-person-fill fs-5 text-dark"></i>
+                              <i className="bi bi-file-person-fill fs-5"></i>
                             </button>
                           </div>
                         </td>
@@ -338,6 +372,14 @@ export default function ReportesPage() {
           />
         )}
       </div>
+
+      {showLocationReportModal && (
+        <ViewLocationReport
+          latitude={showLocationReportModal.latitude}
+          longitude={showLocationReportModal.longitude}
+          onClose={() => setShowLocationReportModal(null)}
+        />
+      )}
     </ProtectedPage>
   );
 }

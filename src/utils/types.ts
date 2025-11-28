@@ -103,3 +103,45 @@ export interface GetReportByIdResponse {
   status: string;
   typereport: string;
 }
+
+export interface AccountItem {
+  account_id: number;
+  account_status: "ACTIVE" | "DESACTIVATED";
+  first_surname: string;
+  second_surname: string;
+  email: string;
+  image: string;
+  name: string;
+  role: string;
+}
+
+export interface AccountsResponse {
+  mesa_servicios: AccountItem[];
+  supervisors: AccountItem[];
+}
+
+export interface EditStaffBody {
+  name?: string;
+  first_surname?: string;
+  second_surname?: string;
+  email?: string;
+  role?: string;
+  image?: string | null;
+}
+
+export interface EditStaffResponse {
+  message: string;
+}
+
+export interface NewStaffBody {
+  email: string;
+  first_surname: string;
+  name: string;
+  password: string;
+  role: string;
+  second_surname: string;
+}
+
+export interface NewStaffResponse {
+  message: string;
+}
