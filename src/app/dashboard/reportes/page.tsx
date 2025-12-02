@@ -1,6 +1,5 @@
 "use client";
-
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { getReports } from "@/services/getReports";
 import type { ResponseReports } from "@/utils/types";
 import { getErrorMessage } from "@/utils/errorHandler";
@@ -9,122 +8,185 @@ import { NewStateSelector } from "@/components/NewStateSelector";
 import { UpdateSupervisorModal } from "@/components/Modals/UpdateSupervisorModal";
 import { ReportModal } from "@/components/Modals/ReportModal";
 import { ViewLocationReport } from "@/components/Modals/ViewLocationReport";
+import { getCatalogueByReport } from "@/services/getCatalogueByReport";
+import { useRouter } from "next/navigation";
+import CreateCatalogModal from "@/components/Modals/CreateCatalogueModal";
+import { useAuth } from "@/hooks/useAuth";
+import { useSearchParams } from "next/navigation";
 import ProtectedPage from "@/components/ProtectedPage";
 import LoadingImage from "@/components/LoadingImage";
 
 export default function ReportesPage() {
+  const { user } = useAuth();
+  const router = useRouter();
   const [reports, setReports] = useState<
     (ResponseReports & { address?: string })[]
   >([]);
-
   const [showLocationReportModal, setShowLocationReportModal] = useState<{
     latitude: number;
     longitude: number;
   } | null>(null);
-
   const [showUpdateSupervisorModal, setShowUpdateSupervisorModal] = useState<{
     reportId: number;
     supervisorId: number | null;
   } | null>(null);
-
   const [showReportModal, setShowReportModal] = useState<{
     reportId: number;
   } | null>(null);
-
+  const [showCatalogueModal, setShowCatalogueModal] = useState(false);
+  const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const limit = 10;
-
   const addressCache = useRef(new Map<string, string>());
   const [currentStatus, setCurrentStatus] = useState("");
+  const searchParams = useSearchParams();
+  const reportId = Number(searchParams.get("report_id"));
 
-  const fetchReports = async (page: number, status = "") => {
-    try {
-      setLoading(true);
-      const data = await getReports(page, limit, status);
+  // ─────────────────────────────────────────────
+  // FETCH REPORTES ============================================
+  // ─────────────────────────────────────────────
+  const fetchReports = useCallback(
+    async (page: number, status = "") => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getReports(page, limit, status);
 
-      if (!data.items || data.items.length === 0) {
-        setReports([]);
-        setTotalPages(1);
-        return;
+        if (!data.items || data.items.length === 0) {
+          setReports([]);
+          setTotalPages(1);
+          return;
+        }
+
+        const concurrency = 2;
+        const results: (ResponseReports & { address?: string })[] = [];
+
+        for (let i = 0; i < data.items.length; i += concurrency) {
+          const batch = data.items.slice(i, i + concurrency);
+          const batchResults = await Promise.all(
+            batch.map(async (report) => {
+              const key = `${report.latitude},${report.longitude}`;
+              if (addressCache.current.has(key)) {
+                return { ...report, address: addressCache.current.get(key) };
+              }
+              try {
+                const address = await reverseGeocode(
+                  report.latitude,
+                  report.longitude
+                );
+                addressCache.current.set(key, address);
+                return { ...report, address };
+              } catch {
+                return { ...report, address: "Sin ubicación" };
+              }
+            })
+          );
+          results.push(...batchResults);
+          await new Promise((r) => setTimeout(r, 80));
+        }
+
+        setReports(results);
+        setTotalPages(data.totalPages);
+      } catch (err) {
+        setError(getErrorMessage(err));
+      } finally {
+        setLoading(false);
       }
-
-      const concurrency = 2;
-      const results: (ResponseReports & { address?: string })[] = [];
-
-      for (let i = 0; i < data.items.length; i += concurrency) {
-        const batch = data.items.slice(i, i + concurrency);
-
-        const batchResults = await Promise.all(
-          batch.map(async (report) => {
-            const key = `${report.latitude},${report.longitude}`;
-            if (addressCache.current.has(key)) {
-              return { ...report, address: addressCache.current.get(key) };
-            }
-            try {
-              const address = await reverseGeocode(
-                report.latitude,
-                report.longitude
-              );
-              addressCache.current.set(key, address);
-              return { ...report, address };
-            } catch {
-              return { ...report, address: "Sin ubicación" };
-            }
-          })
-        );
-
-        results.push(...batchResults);
-        await new Promise((r) => setTimeout(r, 80));
-      }
-
-      setReports(results);
-      setTotalPages(data.totalPages);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [limit]
+  );
 
   useEffect(() => {
     fetchReports(currentPage, currentStatus);
-  }, [currentPage, currentStatus]);
+  }, [currentPage, currentStatus, fetchReports]);
 
-  const handlePrevPage = () => {
+  // ─────────────────────────────────────────────
+  // PAGINACIÓN =============================================
+  // ─────────────────────────────────────────────
+  const handlePrevPage = useCallback(() => {
     if (currentPage > 1) setCurrentPage((p) => p - 1);
-  };
-  const handleNextPage = () => {
+  }, [currentPage]);
+
+  const handleNextPage = useCallback(() => {
     if (currentPage < totalPages) setCurrentPage((p) => p + 1);
-  };
+  }, [currentPage, totalPages]);
 
-  const handleSwitch = (status: string) => () => {
-    setCurrentStatus(status);
-    setCurrentPage(1);
-  };
+  const handleSwitch = useCallback(
+    (status: string) => () => {
+      setCurrentStatus(status);
+      setCurrentPage(1);
+    },
+    []
+  );
 
-  const OpenModalSupervisor = (
-    reportId: number,
-    supervisorId: number | null
-  ) => {
-    setShowUpdateSupervisorModal({ reportId, supervisorId });
-  };
+  // ─────────────────────────────────────────────
+  // MODALES ================================================
+  // ─────────────────────────────────────────────
+  const OpenModalSupervisor = useCallback(
+    (reportId: number, supervisorId: number | null) => {
+      setShowUpdateSupervisorModal({ reportId, supervisorId });
+    },
+    []
+  );
 
-  const OpenModalReport = (reportId: number) => {
+  const OpenModalReport = useCallback((reportId: number) => {
     setShowReportModal({ reportId });
-  };
+  }, []);
 
-  const OpenModalLocationReport = (latitude: number, longitude: number) => {
-    setShowLocationReportModal({ latitude, longitude });
-  };
+  const OpenModalLocationReport = useCallback(
+    (latitude: number, longitude: number) => {
+      setShowLocationReportModal({ latitude, longitude });
+    },
+    []
+  );
 
-  const refreshReports = () => {
+  const OpenModalCatalog = useCallback(
+    async (reportId: number) => {
+      try {
+        if (!user?.token) return;
+
+        try {
+          const catalogue = await getCatalogueByReport(reportId, user.token);
+
+          // SI YA EXISTE → REDIRIGIR
+          if (catalogue?.catalogue_id) {
+            router.push(`/dashboard/catalogo/conceptos?report_id=${reportId}`);
+            return;
+          }
+        } catch (err: any) {
+          // Si es 404, significa que no existe el catálogo, continuamos para crearlo
+          if (err?.response?.status !== 404) {
+            console.error("Error verificando catálogo:", err);
+            return;
+          }
+        }
+
+        // NO EXISTE → ABRIR MODAL PARA CREAR
+        setSelectedReportId(reportId);
+        setShowCatalogueModal(true);
+      } catch (error) {
+        console.error("Error abriendo catálogo:", error);
+      }
+    },
+    [user?.token, router]
+  );
+
+  const refreshReports = useCallback(() => {
     fetchReports(currentPage, currentStatus);
-  };
+  }, [fetchReports, currentPage, currentStatus]);
 
+  const handleCatalogCreated = useCallback(() => {
+    if (!selectedReportId) return;
+    setShowCatalogueModal(false);
+    router.push(`/dashboard/catalogo/conceptos?report_id=${selectedReportId}`);
+  }, [router, selectedReportId]);
+
+  // ─────────────────────────────────────────────
+  // ESTILOS ================================================
+  // ─────────────────────────────────────────────
   const brandColor = "#611232";
 
   const getFilterStyle = (filterId: string) => {
@@ -156,6 +218,9 @@ export default function ReportesPage() {
     { id: "CIERRE", label: "Cierre técnico" },
   ];
 
+  // ─────────────────────────────────────────────
+  // RENDER ================================================
+  // ─────────────────────────────────────────────
   return (
     <ProtectedPage permission="reportes">
       <div className="container-fluid py-4">
@@ -164,11 +229,11 @@ export default function ReportesPage() {
             <h4 className="fw-bold m-0 text-dark">Listado de reportes</h4>
           </div>
 
+          {/* FILTROS */}
           <div className="d-flex flex-wrap gap-2 mb-4 border-bottom pb-3">
             {filters.map((filter) => {
               const isActive = currentStatus === filter.id;
               const activeStyle = getFilterStyle(filter.id);
-
               return (
                 <button
                   key={filter.id}
@@ -189,6 +254,7 @@ export default function ReportesPage() {
             })}
           </div>
 
+          {/* TABLA */}
           <div className="table-responsive">
             <table className="table table-hover align-middle">
               <thead
@@ -236,7 +302,7 @@ export default function ReportesPage() {
                   reports
                     .sort((a, b) => b.report_id - a.report_id)
                     .map((report) => (
-                      <tr key={report.report_id} style={{ cursor: "default" }}>
+                      <tr key={report.report_id}>
                         <td className="ps-3 fw-medium text-dark">
                           {report.report_id}
                         </td>
@@ -248,26 +314,21 @@ export default function ReportesPage() {
                           {report.address || "Cargando..."}
                         </td>
                         <td className="text-dark small">{report.date}</td>
-
                         <td>
                           <NewStateSelector
                             reportId={report.report_id}
                             currentStatus={report.status}
                           />
                         </td>
-
                         <td className="text-end pe-3">
                           <div className="d-flex justify-content-start align-items-center gap-3">
                             <button
                               onClick={() => OpenModalReport(report.report_id)}
                               className="btn btn-sm action-btnz d-flex align-items-center"
-                              data-bs-toggle="tooltip"
-                              data-bs-placement="top"
                               title="Ver reporte"
                             >
                               <i className="bi bi-eye-fill fs-5"></i>
                             </button>
-
                             <button
                               onClick={() =>
                                 OpenModalLocationReport(
@@ -276,22 +337,17 @@ export default function ReportesPage() {
                                 )
                               }
                               className="btn btn-sm action-btnz d-flex align-items-center"
-                              data-bs-toggle="tooltip"
-                              data-bs-placement="top"
                               title="Ver ubicación"
                             >
                               <i className="bi bi-geo-alt-fill fs-5"></i>
                             </button>
-
                             <button
+                              onClick={() => OpenModalCatalog(report.report_id)}
                               className="btn btn-sm action-btnz d-flex align-items-center"
-                              data-bs-toggle="tooltip"
-                              data-bs-placement="top"
-                              title="Ver catálogo"
+                              title="Crear catálogo"
                             >
                               <i className="bi bi-file-earmark-text-fill fs-5"></i>
                             </button>
-
                             <button
                               onClick={() =>
                                 OpenModalSupervisor(
@@ -300,9 +356,7 @@ export default function ReportesPage() {
                                 )
                               }
                               className="btn btn-sm action-btnz d-flex align-items-center"
-                              data-bs-toggle="tooltip"
-                              data-bs-placement="top"
-                              title="Ver supervisor asignado"
+                              title="Ver supervisor"
                             >
                               <i className="bi bi-file-person-fill fs-5"></i>
                             </button>
@@ -321,6 +375,7 @@ export default function ReportesPage() {
             </table>
           </div>
 
+          {/* PAGINACIÓN */}
           {!loading && (
             <div className="d-flex justify-content-center align-items-center gap-3 mt-4">
               <button
@@ -330,7 +385,6 @@ export default function ReportesPage() {
               >
                 Anterior
               </button>
-
               <div className="d-flex gap-1 align-items-center">
                 <span
                   className="d-flex justify-content-center align-items-center rounded-circle text-white small"
@@ -344,7 +398,6 @@ export default function ReportesPage() {
                 </span>
                 <span className="text-muted small mx-1">de {totalPages}</span>
               </div>
-
               <button
                 onClick={handleNextPage}
                 disabled={currentPage === totalPages}
@@ -364,22 +417,27 @@ export default function ReportesPage() {
             onUpdated={refreshReports}
           />
         )}
-
         {showReportModal && (
           <ReportModal
             reportId={showReportModal.reportId}
             onClose={() => setShowReportModal(null)}
           />
         )}
+        {showLocationReportModal && (
+          <ViewLocationReport
+            latitude={showLocationReportModal.latitude}
+            longitude={showLocationReportModal.longitude}
+            onClose={() => setShowLocationReportModal(null)}
+          />
+        )}
+        {showCatalogueModal && selectedReportId && (
+          <CreateCatalogModal
+            reportId={selectedReportId}
+            onClose={() => setShowCatalogueModal(false)}
+            onCreated={handleCatalogCreated}
+          />
+        )}
       </div>
-
-      {showLocationReportModal && (
-        <ViewLocationReport
-          latitude={showLocationReportModal.latitude}
-          longitude={showLocationReportModal.longitude}
-          onClose={() => setShowLocationReportModal(null)}
-        />
-      )}
     </ProtectedPage>
   );
 }

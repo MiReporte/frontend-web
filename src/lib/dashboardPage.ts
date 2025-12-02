@@ -36,7 +36,7 @@ export const dashboard = {
       icon: "/icons/Conceptos.svg",
       title: "Administrar conceptos",
       desc: "Añade, edita o elimina conceptos.",
-      url: "/dashboard/conceptos",
+      url: "/dashboard/catalogo",
       permission: "conceptos",
     },
   ],

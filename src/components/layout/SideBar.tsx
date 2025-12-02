@@ -47,7 +47,7 @@ export function Sidebar() {
     },
     {
       key: "conceptos",
-      href: "/dashboard/conceptos",
+      href: "/dashboard/catalogo",
       label: "Conceptos",
       icon: Conceptos,
     },
