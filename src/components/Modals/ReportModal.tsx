@@ -68,7 +68,7 @@ export function ReportModal({ reportId, onClose }: ReportProps) {
       style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1060 }}
     >
       <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <div className="modal-content border-0 shadow rounded-4">
+        <div className="modal-content border-0 shadow rounded-4 py-2">
           <div className="modal-body px-4 py-2">
             {loading ? (
               <div className="text-center py-5">
