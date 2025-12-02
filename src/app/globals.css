@@ -117,3 +117,29 @@ input[type="password"]::-webkit-textfield-decoration-container * {
   color: white;
   font-size: 1rem;
 }
+
+.action-btnz {
+  background-color: #f4f4f4;
+  color: #611232;
+  border-radius: 50px;
+  padding: 6px 10px;
+  transition: all 0.25s ease;
+  border: 1px solid #e5e5e5;
+}
+
+.action-btnz i {
+  color: #611232;
+  transition: color 0.25s ease;
+}
+
+.action-btnz:hover {
+  background-color: #611232 !important;
+  border-color: #611232 !important;
+  color: white !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(97, 18, 50, 0.35);
+}
+
+.action-btnz:hover i {
+  color: white !important;
+}
