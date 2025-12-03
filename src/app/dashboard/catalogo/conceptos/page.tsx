@@ -79,7 +79,6 @@ export default function ConceptosPage() {
   return (
     <ProtectedPage permission="reportes">
       <div className="container-fluid py-4">
-        {/* HEADER */}
         <div className="bg-white rounded-4 shadow-sm p-4 mb-4">
           {loading ? (
             <LoadingImage />
@@ -108,7 +107,6 @@ export default function ConceptosPage() {
           ) : null}
         </div>
 
-        {/* TABLA */}
         <div className="bg-white rounded-4 shadow-sm p-4">
           <div className="d-flex justify-content-between mb-4">
             <h5 className="fw-bold">Conceptos del catálogo</h5>
@@ -167,7 +165,6 @@ export default function ConceptosPage() {
           </div>
         </div>
 
-        {/* MODAL DE CREAR */}
         {showAddModal && (
           <CreateConceptModal
             catalogueId={Number(catalogueInfo?.catalogue_id)}

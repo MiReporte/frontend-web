@@ -42,12 +42,7 @@ export default function ReportesPage() {
   const limit = 10;
   const addressCache = useRef(new Map<string, string>());
   const [currentStatus, setCurrentStatus] = useState("");
-  const searchParams = useSearchParams();
-  const reportId = Number(searchParams.get("report_id"));
 
-  // ─────────────────────────────────────────────
-  // FETCH REPORTES ============================================
-  // ─────────────────────────────────────────────
   const fetchReports = useCallback(
     async (page: number, status = "") => {
       try {
@@ -103,9 +98,6 @@ export default function ReportesPage() {
     fetchReports(currentPage, currentStatus);
   }, [currentPage, currentStatus, fetchReports]);
 
-  // ─────────────────────────────────────────────
-  // PAGINACIÓN =============================================
-  // ─────────────────────────────────────────────
   const handlePrevPage = useCallback(() => {
     if (currentPage > 1) setCurrentPage((p) => p - 1);
   }, [currentPage]);
@@ -122,9 +114,6 @@ export default function ReportesPage() {
     []
   );
 
-  // ─────────────────────────────────────────────
-  // MODALES ================================================
-  // ─────────────────────────────────────────────
   const OpenModalSupervisor = useCallback(
     (reportId: number, supervisorId: number | null) => {
       setShowUpdateSupervisorModal({ reportId, supervisorId });
@@ -151,20 +140,25 @@ export default function ReportesPage() {
         try {
           const catalogue = await getCatalogueByReport(reportId, user.token);
 
-          // SI YA EXISTE → REDIRIGIR
           if (catalogue?.catalogue_id) {
             router.push(`/dashboard/catalogo/conceptos?report_id=${reportId}`);
             return;
           }
-        } catch (err: any) {
-          // Si es 404, significa que no existe el catálogo, continuamos para crearlo
-          if (err?.response?.status !== 404) {
+        } catch (err: unknown) {
+          if (
+            err &&
+            typeof err === "object" &&
+            "response" in err &&
+            err.response &&
+            typeof err.response === "object" &&
+            "status" in err.response &&
+            err.response.status !== 404
+          ) {
             console.error("Error verificando catálogo:", err);
             return;
           }
         }
 
-        // NO EXISTE → ABRIR MODAL PARA CREAR
         setSelectedReportId(reportId);
         setShowCatalogueModal(true);
       } catch (error) {
@@ -184,9 +178,6 @@ export default function ReportesPage() {
     router.push(`/dashboard/catalogo/conceptos?report_id=${selectedReportId}`);
   }, [router, selectedReportId]);
 
-  // ─────────────────────────────────────────────
-  // ESTILOS ================================================
-  // ─────────────────────────────────────────────
   const brandColor = "#611232";
 
   const getFilterStyle = (filterId: string) => {
@@ -218,9 +209,6 @@ export default function ReportesPage() {
     { id: "CIERRE", label: "Cierre técnico" },
   ];
 
-  // ─────────────────────────────────────────────
-  // RENDER ================================================
-  // ─────────────────────────────────────────────
   return (
     <ProtectedPage permission="reportes">
       <div className="container-fluid py-4">
@@ -229,7 +217,6 @@ export default function ReportesPage() {
             <h4 className="fw-bold m-0 text-dark">Listado de reportes</h4>
           </div>
 
-          {/* FILTROS */}
           <div className="d-flex flex-wrap gap-2 mb-4 border-bottom pb-3">
             {filters.map((filter) => {
               const isActive = currentStatus === filter.id;
@@ -254,7 +241,6 @@ export default function ReportesPage() {
             })}
           </div>
 
-          {/* TABLA */}
           <div className="table-responsive">
             <table className="table table-hover align-middle">
               <thead
@@ -375,7 +361,6 @@ export default function ReportesPage() {
             </table>
           </div>
 
-          {/* PAGINACIÓN */}
           {!loading && (
             <div className="d-flex justify-content-center align-items-center gap-3 mt-4">
               <button
