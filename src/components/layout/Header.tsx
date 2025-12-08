@@ -22,6 +22,8 @@ export function Header() {
     if (pathname.includes("/dashboard/usuarios")) return "Gestión de Usuarios";
     if (pathname.includes("/dashboard/catalogo"))
       return "Catalogo de Conceptos";
+    if (pathname.includes("/dashboard/ciudadanos"))
+      return "Gestión de Ciudadanos";
     if (pathname.includes("/dashboard/profile")) return "Mi Perfil";
     return "Dashboard";
   };

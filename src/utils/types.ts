@@ -102,6 +102,9 @@ export interface GetReportByIdResponse {
   reporting_user: number;
   status: string;
   typereport: string;
+  name_report_user: string;
+  first_surname_report_user: string;
+  second_surname_report_user: string;
 }
 
 export interface AccountItem {
@@ -144,4 +147,41 @@ export interface NewStaffBody {
 
 export interface NewStaffResponse {
   message: string;
+}
+
+export interface CiudadanoItem {
+  account_id: number;
+  email: string;
+  first_surname: string;
+  image: string | null;
+  name: string;
+  registration_date: string;
+  second_surname: string;
+}
+
+export interface CiudadanosResponse {
+  items: CiudadanoItem[];
+  limit: number;
+  page: number;
+  total_pages: number;
+}
+
+export interface ReportItem {
+  asunto: string;
+  date: string;
+  description: string;
+  evidence: string;
+  latitude: number;
+  longitude: number;
+  relation_type: string;
+  report_id: number;
+  status: string;
+  typereport: string;
+}
+
+export interface UserReportsResponse {
+  items: ReportItem[];
+  limit: number;
+  page: number;
+  total_pages: number;
 }

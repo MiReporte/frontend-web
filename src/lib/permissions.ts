@@ -8,6 +8,7 @@ export const rolePermissions: Record<UserRole, string[]> = {
     "reportes",
     "conceptos",
     "perfil",
+    "ciudadanos",
   ],
   "Mesa de servicios": ["resumen", "reportes", "perfil"],
   "Supervisor tecnico": ["reportes", "conceptos", "perfil"],

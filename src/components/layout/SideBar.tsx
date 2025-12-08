@@ -11,6 +11,7 @@ import Reportes from "@/assets/Reportes.svg";
 import Usuarios from "@/assets/Usuarios.svg";
 import Conceptos from "@/assets/Conceptos.svg";
 import Profile from "@/assets/Profile.svg";
+import Ciudadano from "@/assets/Ciudadano.svg";
 
 export function Sidebar() {
   const { user } = useAuth();
@@ -44,6 +45,12 @@ export function Sidebar() {
       href: "/dashboard/usuarios",
       label: "Usuarios",
       icon: Usuarios,
+    },
+    {
+      key: "ciudadanos",
+      href: "/dashboard/ciudadanos",
+      label: "Ciudadanos",
+      icon: Ciudadano,
     },
     {
       key: "conceptos",
