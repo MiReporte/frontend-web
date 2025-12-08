@@ -185,3 +185,29 @@ export interface UserReportsResponse {
   page: number;
   total_pages: number;
 }
+// Define las interfaces para la respuesta del endpoint /reports/statistics
+
+export interface ReportStatistics {
+  by_status: {
+    APROBADO: number;
+    CIERRE: number;
+    COMPLETADO: number;
+    "NO APROBADO": number;
+    PROCESO: number;
+    REVISION: number;
+    [key: string]: number; // Para manejar otros posibles estados
+  };
+  by_type: {
+    ALUM: number;
+    BACHE: number;
+    [key: string]: number; // Para manejar otros posibles tipos
+  };
+  total_reports: number;
+}
+
+// Define la interfaz para la respuesta del endpoint /reports/count-by-neighborhood
+
+export interface NeighborhoodReportCount {
+  neighborhood: string;
+  reports_counted: number;
+}
