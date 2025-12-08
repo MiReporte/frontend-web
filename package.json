@@ -12,7 +12,7 @@
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
     "leaflet": "^1.9.4",
-    "next": "16.0.0",
+    "next": "16.0.7",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-leaflet": "^5.0.0"
@@ -25,7 +25,7 @@
     "@types/react-leaflet": "^2.8.3",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
-    "eslint-config-next": "16.0.0",
+    "eslint-config-next": "16.0.7",
     "typescript": "^5"
   }
 }
