@@ -96,7 +96,13 @@ export default function ConceptosPage() {
                 </div>
 
                 <button
-                  onClick={() => router.push("/dashboard/reportes")}
+                  onClick={() => {
+                    if (window.history.length > 1) {
+                      router.back();
+                    } else {
+                      router.push("/dashboard/reportes");
+                    }
+                  }}
                   className="btn btn-outline-secondary btn-sm h-25"
                 >
                   <i className="bi bi-arrow-left me-2"></i>

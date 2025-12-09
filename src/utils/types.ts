@@ -102,6 +102,9 @@ export interface GetReportByIdResponse {
   reporting_user: number;
   status: string;
   typereport: string;
+  name_report_user: string;
+  first_surname_report_user: string;
+  second_surname_report_user: string;
 }
 
 export interface AccountItem {
@@ -146,7 +149,42 @@ export interface NewStaffResponse {
   message: string;
 }
 
-// Define las interfaces para la respuesta del endpoint /reports/statistics
+export interface CiudadanoItem {
+  account_id: number;
+  email: string;
+  first_surname: string;
+  image: string | null;
+  name: string;
+  registration_date: string;
+  second_surname: string;
+}
+
+export interface CiudadanosResponse {
+  items: CiudadanoItem[];
+  limit: number;
+  page: number;
+  total_pages: number;
+}
+
+export interface ReportItem {
+  asunto: string;
+  date: string;
+  description: string;
+  evidence: string;
+  latitude: number;
+  longitude: number;
+  relation_type: string;
+  report_id: number;
+  status: string;
+  typereport: string;
+}
+
+export interface UserReportsResponse {
+  items: ReportItem[];
+  limit: number;
+  page: number;
+  total_pages: number;
+}
 
 export interface ReportStatistics {
   by_status: {
@@ -156,17 +194,15 @@ export interface ReportStatistics {
     "NO APROBADO": number;
     PROCESO: number;
     REVISION: number;
-    [key: string]: number; // Para manejar otros posibles estados
+    [key: string]: number;
   };
   by_type: {
     ALUM: number;
     BACHE: number;
-    [key: string]: number; // Para manejar otros posibles tipos
+    [key: string]: number;
   };
   total_reports: number;
 }
-
-// Define la interfaz para la respuesta del endpoint /reports/count-by-neighborhood
 
 export interface NeighborhoodReportCount {
   neighborhood: string;

@@ -26,6 +26,7 @@ export default function DashboardPage() {
     "rgba(201, 221, 22, 0.2)",
     "rgba(22, 137, 221, 0.14)",
     "rgba(22, 25, 221, 0.14)",
+    "rgba(214, 22, 221, 0.16)",
     "rgba(137, 22, 221, 0.18)",
   ];
 
