@@ -33,6 +33,13 @@ export const dashboard = {
       permission: "usuarios",
     },
     {
+      icon: "/icons/Ciudadano.svg",
+      title: "Gestionar ciudadanos",
+      desc: "Administra la información de los ciudadanos.",
+      url: "/dashboard/ciudadanos",
+      permission: "ciudadanos",
+    },
+    {
       icon: "/icons/Conceptos.svg",
       title: "Administrar conceptos",
       desc: "Añade, edita o elimina conceptos.",
