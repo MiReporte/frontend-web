@@ -242,3 +242,14 @@ export type TimeRangeFilter =
   | "todo_el_tiempo";
 
 export type TimeRangeFilterState = TimeRangeFilter | null;
+
+export interface ReportCountByDay {
+  domingo: number;
+  lunes: number;
+  martes: number;
+  miercoles: number;
+  jueves: number;
+  viernes: number;
+  sabado: number;
+  [key: string]: number; // Permite manejar cualquier clave de día
+}
