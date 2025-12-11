@@ -105,6 +105,10 @@ export interface GetReportByIdResponse {
   name_report_user: string;
   first_surname_report_user: string;
   second_surname_report_user: string;
+
+  status_history: {
+    [key: string]: string;
+  };
 }
 
 export interface AccountItem {
