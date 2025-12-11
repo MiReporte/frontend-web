@@ -8,7 +8,6 @@ import { validateEmail, validatePassword } from "@/utils/Validator";
 import Eye from "/public/icons/eye.svg";
 import EyeOff from "/public/icons/eye-off.svg";
 import Figura from "/public/FigureLogin.svg";
-import Escudo from "/public/icons/EscudoIcon.png";
 import HeroImage from "/public/HeroImage.png";
 import Image from "next/image";
 import logo from "@/assets/MiReporte.png";
@@ -64,14 +63,6 @@ const LoginPage = (): React.JSX.Element => {
       <div className={styles.formContainer}>
         <div className={styles.logoContainer}>
           <Image src={Figura} alt="Figura Login" className={styles.fondo} />
-
-          <Image
-            src={Escudo}
-            alt="Escudo Icon"
-            className={styles.escudo}
-            width={80}
-            height={80}
-          />
 
           <Image
             src={logo}
