@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { getReports } from "@/services/getReports";
-import type { ResponseReports } from "@/utils/types";
+import type { PaginatedResponse, ResponseReports } from "@/utils/types";
 import { getErrorMessage } from "@/utils/errorHandler";
 import { reverseGeocode } from "@/utils/reverseGeocoding";
 import { NewStateSelector } from "@/components/NewStateSelector";
@@ -12,7 +12,7 @@ import { getCatalogueByReport } from "@/services/getCatalogueByReport";
 import { useRouter } from "next/navigation";
 import CreateCatalogModal from "@/components/Modals/CreateCatalogueModal";
 import { useAuth } from "@/hooks/useAuth";
-import { useSearchParams } from "next/navigation";
+import { getSupervisorReports } from "@/services/getSupervisorReports";
 import ProtectedPage from "@/components/ProtectedPage";
 import LoadingImage from "@/components/LoadingImage";
 
@@ -48,9 +48,28 @@ export default function ReportesPage() {
       try {
         setLoading(true);
         setError(null);
-        const data = await getReports(page, limit, status);
 
-        if (!data.items || data.items.length === 0) {
+        let paginatedData: PaginatedResponse;
+
+        if (user?.role?.toLowerCase() === "supervisor tecnico") {
+          if (!user?.token) throw new Error("Token no encontrado");
+
+          const supervisorList = await getSupervisorReports(user.token);
+
+          paginatedData = {
+            items: supervisorList,
+            limit: supervisorList.length,
+            page: 1,
+            totalItems: supervisorList.length,
+            totalPages: 1,
+          };
+        } else {
+          paginatedData = await getReports(page, limit, status);
+        }
+
+        const items = paginatedData.items ?? [];
+
+        if (items.length === 0) {
           setReports([]);
           setTotalPages(1);
           return;
@@ -59,14 +78,16 @@ export default function ReportesPage() {
         const concurrency = 2;
         const results: (ResponseReports & { address?: string })[] = [];
 
-        for (let i = 0; i < data.items.length; i += concurrency) {
-          const batch = data.items.slice(i, i + concurrency);
+        for (let i = 0; i < items.length; i += concurrency) {
+          const batch = items.slice(i, i + concurrency);
           const batchResults = await Promise.all(
             batch.map(async (report) => {
               const key = `${report.latitude},${report.longitude}`;
+
               if (addressCache.current.has(key)) {
                 return { ...report, address: addressCache.current.get(key) };
               }
+
               try {
                 const address = await reverseGeocode(
                   report.latitude,
@@ -84,14 +105,14 @@ export default function ReportesPage() {
         }
 
         setReports(results);
-        setTotalPages(data.totalPages);
+        setTotalPages(paginatedData.totalPages);
       } catch (err) {
         setError(getErrorMessage(err));
       } finally {
         setLoading(false);
       }
     },
-    [limit]
+    [limit, user]
   );
 
   useEffect(() => {
