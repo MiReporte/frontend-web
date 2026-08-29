@@ -155,6 +155,7 @@ function ProfileInner() {
           staffId={editingStaff.account_id}
           existingData={editingStaff}
           onClose={() => setEditingStaff(null)}
+          onUpdated={reloadStaff}
         />
       )}
 

@@ -331,9 +331,7 @@ export default function ReportesPage() {
                     </td>
                   </tr>
                 ) : reports.length > 0 ? (
-                  reports
-                    .sort((a, b) => b.report_id - a.report_id)
-                    .map((report) => (
+                  reports.map((report) => (
                       <tr
                         key={report.report_id}
                         className={

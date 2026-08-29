@@ -8,12 +8,14 @@ interface EditStaffModalProps {
   staffId: number;
   onClose: () => void;
   existingData?: AccountItem;
+  onUpdated: () => Promise<void> | void;
 }
 
 export function EditStaffModal({
   staffId,
   onClose,
   existingData,
+  onUpdated,
 }: EditStaffModalProps) {
   const { user } = useAuth();
 
@@ -29,6 +31,13 @@ export function EditStaffModal({
   const [email, setEmail] = useState<string>("");
   const [role, setRole] = useState<string>("");
 
+  const ROLE_TO_CODE: Record<string, string> = {
+    "Supervisor tecnico": "SUP",
+    "Mesa de servicios": "MESA",
+    SUP: "SUP",
+    MESA: "MESA",
+  };
+
   useEffect(() => {
     if (!existingData) {
       setLoading(false);
@@ -39,7 +48,7 @@ export function EditStaffModal({
     setFirstSurname(existingData.first_surname ?? "");
     setSecondSurname(existingData.second_surname ?? "");
     setEmail(existingData.email ?? "");
-    setRole(existingData.role ?? "");
+    setRole(ROLE_TO_CODE[existingData.role] ?? "");
 
     setLoading(false);
   }, [existingData]);
@@ -66,6 +75,8 @@ export function EditStaffModal({
       };
 
       await editStaff(user.token, staffId, body);
+
+      await onUpdated();
 
       setSuccess("Usuario actualizado correctamente.");
 
@@ -171,8 +182,8 @@ export function EditStaffModal({
                     onChange={(e) => setRole(e.target.value)}
                   >
                     <option value="">Seleccione un rol</option>
-                    <option value="Supervisor">Supervisor</option>
-                    <option value="Mesa Servicios">Mesa de Servicios</option>
+                    <option value="SUP">Supervisor Técnico</option>
+                    <option value="MESA">Mesa de Servicios</option>
                   </select>
                 </div>
               </>
