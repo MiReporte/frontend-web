@@ -9,9 +9,10 @@ import { UpdateSupervisorModal } from "@/components/Modals/UpdateSupervisorModal
 import { ReportModal } from "@/components/Modals/ReportModal";
 import { ViewLocationReport } from "@/components/Modals/ViewLocationReport";
 import { getCatalogueByReport } from "@/services/getCatalogueByReport";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import CreateCatalogModal from "@/components/Modals/CreateCatalogueModal";
 import { useAuth } from "@/hooks/useAuth";
+import { useNotifications } from "@/hooks/useNotifications";
 import { getSupervisorReports } from "@/services/getSupervisorReports";
 import ProtectedPage from "@/components/ProtectedPage";
 import LoadingImage from "@/components/LoadingImage";
@@ -42,6 +43,13 @@ export default function ReportesPage() {
   const limit = 10;
   const addressCache = useRef(new Map<string, string>());
   const [currentStatus, setCurrentStatus] = useState("");
+
+  const searchParams = useSearchParams();
+  const { lastReportEvent } = useNotifications();
+  const lastProcessedEventIdRef = useRef<string | null>(null);
+  const highlightedReportId = searchParams.get("report_id")
+    ? Number(searchParams.get("report_id"))
+    : null;
 
   const fetchReports = useCallback(
     async (page: number, status = "") => {
@@ -118,6 +126,23 @@ export default function ReportesPage() {
   useEffect(() => {
     fetchReports(currentPage, currentStatus);
   }, [currentPage, currentStatus, fetchReports]);
+
+  // Actualizar tabla en tiempo real cuando llega un nuevo reporte vía Socket.IO
+  useEffect(() => {
+    if (!lastReportEvent?.report?.report_id) return;
+
+    const eventKey = `${lastReportEvent.report.report_id}-${lastReportEvent.report.date}`;
+    if (lastProcessedEventIdRef.current === eventKey) return;
+    lastProcessedEventIdRef.current = eventKey;
+
+    const userRole = user?.role?.toLowerCase();
+    const isAllowed =
+      userRole === "administrador" || userRole === "mesa de servicios";
+
+    if (isAllowed && (currentStatus === "" || currentStatus === "REVISION")) {
+      fetchReports(currentPage, currentStatus);
+    }
+  }, [lastReportEvent, user?.role, currentStatus, currentPage, fetchReports]);
 
   const handlePrevPage = useCallback(() => {
     if (currentPage > 1) setCurrentPage((p) => p - 1);
@@ -309,7 +334,14 @@ export default function ReportesPage() {
                   reports
                     .sort((a, b) => b.report_id - a.report_id)
                     .map((report) => (
-                      <tr key={report.report_id}>
+                      <tr
+                        key={report.report_id}
+                        className={
+                          highlightedReportId === report.report_id
+                            ? "table-warning border-start border-4 border-warning shadow-sm"
+                            : ""
+                        }
+                      >
                         <td className="ps-3 fw-medium text-dark">
                           {report.report_id}
                         </td>
