@@ -253,3 +253,44 @@ export interface ReportCountByDay {
   sabado: number;
   [key: string]: number; // Permite manejar cualquier clave de día
 }
+
+export interface NotificationItem {
+  id?: number | string;
+  type: string;
+  message: string;
+  is_read: boolean;
+  date: string;
+  report_id?: number | null;
+}
+
+export interface NewReportSocketPayload {
+  notification: {
+    type: string;
+    message: string;
+    is_read: boolean;
+    date: string;
+    report_id: number;
+  };
+  report: {
+    report_id: number;
+    typereport: string;
+    status: string;
+    date: string;
+    latitude: number;
+    longitude: number;
+  };
+}
+
+export interface UnreadNotificationsCountResponse {
+  unread_count: number;
+}
+
+export interface NotificationsContextType {
+  notifications: NotificationItem[];
+  unreadCount: number;
+  isConnected: boolean;
+  lastReportEvent: NewReportSocketPayload | null;
+  markAllAsRead: () => Promise<void>;
+  refreshNotifications: () => Promise<void>;
+}
+

@@ -46,22 +46,23 @@ export async function getReportsCountByNeighborhood(
     }
   );
 
-  let responseData: any;
+  let responseData: unknown;
   // 1. Leer el cuerpo de la respuesta una sola vez (éxito o error)
   try {
     responseData = await response.json();
-  } catch (e) {
+  } catch {
     responseData = {};
   }
 
   // 2. Manejo de error
   if (!response.ok) {
+    const errObj = responseData as { error?: string } | undefined;
     throw new Error(
-      responseData.error || "Failed to fetch neighborhood counts"
+      errObj?.error || "Failed to fetch neighborhood counts"
     );
   }
 
   // 3. Retorno de datos
-  const data: NeighborhoodReportCount[] = responseData;
+  const data = (responseData || []) as NeighborhoodReportCount[];
   return data;
 }
