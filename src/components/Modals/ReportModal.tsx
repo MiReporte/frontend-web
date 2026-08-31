@@ -121,6 +121,8 @@ export function ReportModal({ reportId, onClose }: ReportProps) {
   const [reportData, setReportData] = useState<GetReportByIdResponse | null>(
     null
   );
+  // Active selected image index for the gallery preview
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
 
   const [address, setAddress] = useState<string>("Cargando ubicación...");
   const [loading, setLoading] = useState(true);
@@ -145,6 +147,7 @@ export function ReportModal({ reportId, onClose }: ReportProps) {
         }
 
         setReportData(data);
+        setSelectedImageIndex(0);
 
         const key = `${data.latitude},${data.longitude}`;
         if (addressCache.has(key)) {
@@ -167,6 +170,47 @@ export function ReportModal({ reportId, onClose }: ReportProps) {
 
     run();
   }, [reportId, user?.token]);
+
+  // Compute available images list from reportData
+  const evidenceImages: string[] = reportData
+    ? reportData.evidences && reportData.evidences.length > 0
+      ? reportData.evidences
+      : ([
+          reportData.evidence1 || reportData.evidence,
+          reportData.evidence2,
+          reportData.evidence3,
+        ].filter(Boolean) as string[])
+    : [];
+
+  const currentPreviewImage =
+    evidenceImages[selectedImageIndex] || evidenceImages[0] || null;
+
+  // Handlers for previous and next image navigation
+  const handlePrevImage = () => {
+    if (evidenceImages.length <= 1) return;
+    setSelectedImageIndex((prev) =>
+      prev > 0 ? prev - 1 : evidenceImages.length - 1
+    );
+  };
+
+  const handleNextImage = () => {
+    if (evidenceImages.length <= 1) return;
+    setSelectedImageIndex((prev) =>
+      prev < evidenceImages.length - 1 ? prev + 1 : 0
+    );
+  };
+
+  // Keyboard navigation support for left/right arrow keys
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (evidenceImages.length <= 1) return;
+      if (e.key === "ArrowLeft") handlePrevImage();
+      if (e.key === "ArrowRight") handleNextImage();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [evidenceImages.length]);
 
   return (
     <div
@@ -267,20 +311,133 @@ export function ReportModal({ reportId, onClose }: ReportProps) {
                   history={reportData.status_history}
                 />
 
-                <h6 className="text-muted text-uppercase small fw-bold mt-4 mb-2">
-                  Evidencia
-                </h6>
-                <div
-                  className="ratio ratio-4x3 bg-light rounded-3 overflow-hidden border shadow-sm"
-                  style={{ minHeight: "200px" }}
-                >
-                  <Image
-                    src={reportData.evidence}
-                    alt="Evidencia"
-                    fill
-                    className="object-fit-cover"
-                  />
+                {/* Evidence Section Header */}
+                <div className="d-flex justify-content-between align-items-center mt-4 mb-2">
+                  <h6 className="text-muted text-uppercase small fw-bold mb-0">
+                    Evidencias ({evidenceImages.length})
+                  </h6>
+                  {currentPreviewImage && (
+                    <a
+                      href={currentPreviewImage}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-sm btn-outline-secondary rounded-pill d-inline-flex align-items-center gap-1"
+                      style={{ fontSize: "0.75rem" }}
+                    >
+                      <i className="bi bi-box-arrow-up-right" />
+                      Ver original
+                    </a>
+                  )}
                 </div>
+
+                {currentPreviewImage ? (
+                  <div>
+                    {/* Main Featured Image Container with Isolated Ratio and Overlay Controls */}
+                    <div className="position-relative bg-dark rounded-3 overflow-hidden border shadow-sm mb-3">
+                      {/* Image Ratio Container (only contains Image to avoid Bootstrap .ratio > * stretching child controls) */}
+                      <div className="ratio ratio-16x9">
+                        <Image
+                          src={currentPreviewImage}
+                          alt={`Evidencia ${selectedImageIndex + 1}`}
+                          fill
+                          className="object-fit-contain"
+                        />
+                      </div>
+
+                      {/* Side navigation arrows (rendered when more than 1 image is available) */}
+                      {evidenceImages.length > 1 && (
+                        <>
+                          {/* Previous image button */}
+                          <button
+                            type="button"
+                            onClick={handlePrevImage}
+                            aria-label="Imagen anterior"
+                            className="btn btn-dark bg-opacity-75 position-absolute top-50 start-0 translate-middle-y ms-2 rounded-circle d-flex align-items-center justify-content-center border-0 text-white shadow"
+                            style={{
+                              width: "38px",
+                              height: "38px",
+                              zIndex: 10,
+                              cursor: "pointer",
+                            }}
+                          >
+                            <i className="bi bi-chevron-left fs-5" />
+                          </button>
+
+                          {/* Next image button */}
+                          <button
+                            type="button"
+                            onClick={handleNextImage}
+                            aria-label="Siguiente imagen"
+                            className="btn btn-dark bg-opacity-75 position-absolute top-50 end-0 translate-middle-y me-2 rounded-circle d-flex align-items-center justify-content-center border-0 text-white shadow"
+                            style={{
+                              width: "38px",
+                              height: "38px",
+                              zIndex: 10,
+                              cursor: "pointer",
+                            }}
+                          >
+                            <i className="bi bi-chevron-right fs-5" />
+                          </button>
+
+                          {/* Image position counter badge */}
+                          <div
+                            className="position-absolute bottom-0 start-50 translate-middle-x mb-2 px-3 py-1 rounded-pill bg-dark bg-opacity-75 text-white small"
+                            style={{
+                              fontSize: "0.75rem",
+                              zIndex: 10,
+                              pointerEvents: "none",
+                            }}
+                          >
+                            {selectedImageIndex + 1} / {evidenceImages.length}
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Interactive Thumbnails for multiple images (1-3 images) */}
+                    {evidenceImages.length > 1 && (
+                      <div className="d-flex gap-2 pb-1">
+                        {evidenceImages.map((imgUrl, index) => {
+                          const isSelected = selectedImageIndex === index;
+                          return (
+                            <button
+                              key={index}
+                              type="button"
+                              onClick={() => setSelectedImageIndex(index)}
+                              className={`btn p-0 rounded-3 overflow-hidden position-relative transition-all ${
+                                isSelected
+                                  ? "border border-3 border-danger shadow"
+                                  : "border opacity-75"
+                              }`}
+                              style={{
+                                width: "80px",
+                                height: "80px",
+                                outline: "none",
+                              }}
+                            >
+                              <Image
+                                src={imgUrl}
+                                alt={`Miniatura evidencia ${index + 1}`}
+                                fill
+                                className="object-fit-cover"
+                              />
+                              <span
+                                className="position-absolute bottom-0 end-0 badge bg-dark bg-opacity-75 rounded-0 rounded-top-start small"
+                                style={{ fontSize: "0.65rem" }}
+                              >
+                                #{index + 1}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="p-3 bg-light rounded-3 text-center text-muted small border">
+                    Sin evidencia fotográfica disponible
+                  </div>
+                )}
               </div>
             ) : null}
           </div>
