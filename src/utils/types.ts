@@ -213,6 +213,17 @@ export interface NeighborhoodReportCount {
   reports_counted: number;
 }
 
+export interface ReportMapPoint {
+  report_id: number;
+  latitude: number;
+  longitude: number;
+  typereport: "BACHE" | "ALUM" | string;
+  status: string;
+  date: string | null;
+  problem: string | null;
+  neighborhood: string;
+}
+
 // Define las interfaces para la respuesta del endpoint /reports/statistics
 
 export interface ReportStatistics {
