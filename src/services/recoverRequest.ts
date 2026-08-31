@@ -13,13 +13,15 @@ export async function recoverRequest(email: string) {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
-      throw new Error(errorData?.msg || "Error en la solicitud");
+      return {
+        error: errorData?.msg || "No se pudo procesar la solicitud.",
+      };
     }
 
     const data = await response.json();
     return data;
   } catch (error) {
     console.error("RecoverRequest error:", error);
-    return null;
+    return { error: "Error de conexión. Inténtalo de nuevo." };
   }
 }

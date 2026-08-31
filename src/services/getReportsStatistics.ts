@@ -42,17 +42,18 @@ export async function getReportsStatistics(
     },
   });
 
-  let responseData: any;
+  let responseData: unknown;
   try {
     responseData = await response.json();
-  } catch (e) {
+  } catch {
     responseData = {};
   }
 
   if (!response.ok) {
-    throw new Error(responseData.error || "Failed to fetch report statistics");
+    const errObj = responseData as { error?: string } | undefined;
+    throw new Error(errObj?.error || "Failed to fetch report statistics");
   }
 
-  const data: ReportStatistics = responseData;
+  const data = responseData as ReportStatistics;
   return data;
 }

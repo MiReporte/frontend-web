@@ -46,7 +46,7 @@ export function DeleteStaffModal({
       tabIndex={-1}
       style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1060 }}
     >
-      <div className="modal-dialog modal-dialog-centered">
+      <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div className="modal-content border-0 shadow-lg rounded-4">
           <div className="modal-header border-0">
             <h5 className="modal-title fw-bold" style={{ color: "#611232" }}>

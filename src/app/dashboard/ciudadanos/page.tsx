@@ -32,7 +32,10 @@ export default function CiudadanosPage() {
 
       try {
         const result = await getCiudadanos(user.token);
-        setData(result);
+        const sortedItems = [...result.items].sort(
+          (a, b) => a.account_id - b.account_id
+        );
+        setData({ ...result, items: sortedItems });
       } catch {
         setError("Error al obtener ciudadanos");
       }

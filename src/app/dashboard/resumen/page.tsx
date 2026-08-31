@@ -53,8 +53,9 @@ const PieChart = ({
   return (
     <div
       className="d-flex justify-content-center align-items-center"
-      style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox="0 0 100 100">
+      style={{ width: "100%", maxWidth: size, aspectRatio: "1" }}
+    >
+      <svg width="100%" height="100%" viewBox="0 0 100 100">
         {data.map((item, index) => {
           const percent = item.value / total;
           if (percent <= 0) return null;
@@ -108,7 +109,8 @@ interface BarChartData {
 }
 
 const BarChart = ({ data }: { data: BarChartData[] }) => {
-  const maxCount = Math.max(...data.map((d) => d.count), 0);
+  const safeCounts = data.map((d) => Number(d.count) || 0);
+  const maxCount = Math.max(...safeCounts, 0);
   const height = 150;
   const width = 350;
   const paddingLeft = 35;
@@ -143,11 +145,12 @@ const BarChart = ({ data }: { data: BarChartData[] }) => {
         />
 
         {data.map((item, index) => {
+          const count = Number(item.count) || 0;
           const barWidth = (width - paddingLeft - paddingRight) / data.length;
           const x = paddingLeft + index * barWidth;
           const barHeight =
-            item.count > 0
-              ? (item.count / maxCount) * (height - paddingTop - paddingBottom)
+            count > 0
+              ? (count / maxCount) * (height - paddingTop - paddingBottom)
               : 0;
           const y = height - paddingBottom - barHeight;
           const color = "#4F46E5";
@@ -173,7 +176,7 @@ const BarChart = ({ data }: { data: BarChartData[] }) => {
                 {item.day.slice(0, 3)}
               </text>
 
-              {item.count > 0 && barHeight > 10 && (
+              {count > 0 && barHeight > 10 && (
                 <text
                   x={x + barWidth / 2}
                   y={y - 5}
@@ -181,7 +184,7 @@ const BarChart = ({ data }: { data: BarChartData[] }) => {
                   fontSize="8"
                   fontWeight="bold"
                   fill="#343a40">
-                  {item.count}
+                  {count}
                 </text>
               )}
             </g>
@@ -203,6 +206,7 @@ export default function ResumenPage() {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dayChartError, setDayChartError] = useState<string | null>(null);
 
   const [reportTypeFilter, setReportTypeFilter] =
     useState<ReportTypeFilter>(null);
@@ -236,18 +240,30 @@ export default function ResumenPage() {
     const token = user.token;
 
     try {
-      const [statsData, neighborhoodData, dayCountData] = await Promise.all([
+      const [statsData, neighborhoodData] = await Promise.all([
         getReportsStatistics(token, typeFilter, timeFilter),
         getReportsCountByNeighborhood(token, typeFilter, timeFilter),
-        getReportsCountByDay(token, typeFilter),
       ]);
       setStats(statsData);
       setNeighborhoods(neighborhoodData);
-      setReportsByDay(dayCountData);
     } catch (err) {
       console.error("Error loading dashboard data:", err);
       setError(
         "No se pudieron cargar los datos del dashboard. Inténtalo de nuevo."
+      );
+    }
+
+    try {
+      const dayCountData = await getReportsCountByDay(token, typeFilter);
+      setReportsByDay(dayCountData);
+      setDayChartError(null);
+    } catch (err) {
+      console.error("Error loading reports by day:", err);
+      setReportsByDay(null);
+      setDayChartError(
+        err instanceof Error
+          ? err.message
+          : "No se pudieron cargar los reportes por día."
       );
     } finally {
       setLoading(false);
@@ -416,9 +432,19 @@ export default function ResumenPage() {
                     ? "Solo reportes de Alumbrado"
                     : "Todos los reportes"}
                 </p>
-                <div className="mt-3">
-                  <BarChart data={barChartData} />
-                </div>
+                {dayChartError ? (
+                  <div
+                    className="alert alert-danger d-flex align-items-center gap-2 mt-3 mb-0"
+                    role="alert"
+                    style={{ fontSize: "0.9rem" }}>
+                    <i className="bi bi-exclamation-triangle-fill"></i>
+                    <span>{dayChartError}</span>
+                  </div>
+                ) : (
+                  <div className="mt-3">
+                    <BarChart data={barChartData} />
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -433,7 +459,7 @@ export default function ResumenPage() {
                   <div className="d-flex flex-column flex-md-row align-items-center justify-content-between mt-4 gap-4">
                     <div
                       className="d-flex flex-column gap-3 mb-4 mb-md-0"
-                      style={{ minWidth: "160px" }}>
+                      style={{ minWidth: "0" }}>
                       <div className="d-flex flex-column">
                         <p
                           className="m-0 fw-semibold text-warning"

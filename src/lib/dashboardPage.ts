@@ -1,8 +1,9 @@
 export const dashboard = {
   hero: {
-    title: "Bienvenido, ",
+    title: "Hola, ",
     subtitle: "¿Qué te gustaría hacer hoy?",
   },
+  section: "Módulos de trabajo",
   cards: [
     {
       icon: "/icons/Resumen.svg",
@@ -10,13 +11,7 @@ export const dashboard = {
       desc: "Obtén un resumen de tu actividad reciente.",
       url: "/dashboard/resumen",
       permission: "resumen",
-    },
-    {
-      icon: "/icons/Analisis.svg",
-      title: "Ver análisis",
-      desc: "Explora los datos y métricas monetarias.",
-      url: "/dashboard/analisis",
-      permission: "analisis",
+      color: "#D02727",
     },
     {
       icon: "/icons/Reportes.svg",
@@ -24,6 +19,7 @@ export const dashboard = {
       desc: "Crea y gestiona los reportes.",
       url: "/dashboard/reportes",
       permission: "reportes",
+      color: "#1D8425",
     },
     {
       icon: "/icons/Usuarios.svg",
@@ -31,6 +27,7 @@ export const dashboard = {
       desc: "Gestiona los usuarios de la aplicación.",
       url: "/dashboard/usuarios",
       permission: "usuarios",
+      color: "#271E90",
     },
     {
       icon: "/icons/Ciudadano.svg",
@@ -38,13 +35,7 @@ export const dashboard = {
       desc: "Administra la información de los ciudadanos.",
       url: "/dashboard/ciudadanos",
       permission: "ciudadanos",
-    },
-    {
-      icon: "/icons/Conceptos.svg",
-      title: "Administrar conceptos",
-      desc: "Añade, edita o elimina conceptos.",
-      url: "/dashboard/catalogo",
-      permission: "conceptos",
+      color: "#C60081",
     },
   ],
 };

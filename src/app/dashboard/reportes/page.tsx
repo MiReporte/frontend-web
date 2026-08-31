@@ -8,10 +8,9 @@ import { NewStateSelector } from "@/components/NewStateSelector";
 import { UpdateSupervisorModal } from "@/components/Modals/UpdateSupervisorModal";
 import { ReportModal } from "@/components/Modals/ReportModal";
 import { ViewLocationReport } from "@/components/Modals/ViewLocationReport";
-import { getCatalogueByReport } from "@/services/getCatalogueByReport";
-import { useRouter } from "next/navigation";
-import CreateCatalogModal from "@/components/Modals/CreateCatalogueModal";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { useNotifications } from "@/hooks/useNotifications";
 import { getSupervisorReports } from "@/services/getSupervisorReports";
 import ProtectedPage from "@/components/ProtectedPage";
 import LoadingImage from "@/components/LoadingImage";
@@ -33,8 +32,6 @@ export default function ReportesPage() {
   const [showReportModal, setShowReportModal] = useState<{
     reportId: number;
   } | null>(null);
-  const [showCatalogueModal, setShowCatalogueModal] = useState(false);
-  const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,6 +39,13 @@ export default function ReportesPage() {
   const limit = 10;
   const addressCache = useRef(new Map<string, string>());
   const [currentStatus, setCurrentStatus] = useState("");
+
+  const searchParams = useSearchParams();
+  const { lastReportEvent } = useNotifications();
+  const lastProcessedEventIdRef = useRef<string | null>(null);
+  const highlightedReportId = searchParams.get("report_id")
+    ? Number(searchParams.get("report_id"))
+    : null;
 
   const fetchReports = useCallback(
     async (page: number, status = "") => {
@@ -119,6 +123,23 @@ export default function ReportesPage() {
     fetchReports(currentPage, currentStatus);
   }, [currentPage, currentStatus, fetchReports]);
 
+  // Actualizar tabla en tiempo real cuando llega un nuevo reporte vía Socket.IO
+  useEffect(() => {
+    if (!lastReportEvent?.report?.report_id) return;
+
+    const eventKey = `${lastReportEvent.report.report_id}-${lastReportEvent.report.date}`;
+    if (lastProcessedEventIdRef.current === eventKey) return;
+    lastProcessedEventIdRef.current = eventKey;
+
+    const userRole = user?.role?.toLowerCase();
+    const isAllowed =
+      userRole === "administrador" || userRole === "mesa de servicios";
+
+    if (isAllowed && (currentStatus === "" || currentStatus === "REVISION")) {
+      fetchReports(currentPage, currentStatus);
+    }
+  }, [lastReportEvent, user?.role, currentStatus, currentPage, fetchReports]);
+
   const handlePrevPage = useCallback(() => {
     if (currentPage > 1) setCurrentPage((p) => p - 1);
   }, [currentPage]);
@@ -153,51 +174,9 @@ export default function ReportesPage() {
     []
   );
 
-  const OpenModalCatalog = useCallback(
-    async (reportId: number) => {
-      try {
-        if (!user?.token) return;
-
-        try {
-          const catalogue = await getCatalogueByReport(reportId, user.token);
-
-          if (catalogue?.catalogue_id) {
-            router.push(`/dashboard/catalogo/conceptos?report_id=${reportId}`);
-            return;
-          }
-        } catch (err: unknown) {
-          if (
-            err &&
-            typeof err === "object" &&
-            "response" in err &&
-            err.response &&
-            typeof err.response === "object" &&
-            "status" in err.response &&
-            err.response.status !== 404
-          ) {
-            console.error("Error verificando catálogo:", err);
-            return;
-          }
-        }
-
-        setSelectedReportId(reportId);
-        setShowCatalogueModal(true);
-      } catch (error) {
-        console.error("Error abriendo catálogo:", error);
-      }
-    },
-    [user?.token, router]
-  );
-
   const refreshReports = useCallback(() => {
     fetchReports(currentPage, currentStatus);
   }, [fetchReports, currentPage, currentStatus]);
-
-  const handleCatalogCreated = useCallback(() => {
-    if (!selectedReportId) return;
-    setShowCatalogueModal(false);
-    router.push(`/dashboard/catalogo/conceptos?report_id=${selectedReportId}`);
-  }, [router, selectedReportId]);
 
   const brandColor = "#611232";
 
@@ -277,7 +256,7 @@ export default function ReportesPage() {
                   </th>
                   <th
                     className="text-secondary fw-normal small bg-white"
-                    style={{ minWidth: "200px" }}
+                    style={{ minWidth: "120px" }}
                   >
                     Ubicación
                   </th>
@@ -306,10 +285,15 @@ export default function ReportesPage() {
                     </td>
                   </tr>
                 ) : reports.length > 0 ? (
-                  reports
-                    .sort((a, b) => b.report_id - a.report_id)
-                    .map((report) => (
-                      <tr key={report.report_id}>
+                  reports.map((report) => (
+                      <tr
+                        key={report.report_id}
+                        className={
+                          highlightedReportId === report.report_id
+                            ? "table-warning border-start border-4 border-warning shadow-sm"
+                            : ""
+                        }
+                      >
                         <td className="ps-3 fw-medium text-dark">
                           {report.report_id}
                         </td>
@@ -328,13 +312,13 @@ export default function ReportesPage() {
                           />
                         </td>
                         <td className="text-end pe-3">
-                          <div className="d-flex justify-content-start align-items-center gap-3">
+                          <div className="d-flex justify-content-start align-items-center gap-2">
                             <button
                               onClick={() => OpenModalReport(report.report_id)}
                               className="btn btn-sm action-btnz d-flex align-items-center"
                               title="Ver reporte"
                             >
-                              <i className="bi bi-eye-fill fs-5"></i>
+                              <i className="bi bi-eye-fill fs-6"></i>
                             </button>
                             <button
                               onClick={() =>
@@ -346,14 +330,7 @@ export default function ReportesPage() {
                               className="btn btn-sm action-btnz d-flex align-items-center"
                               title="Ver ubicación"
                             >
-                              <i className="bi bi-geo-alt-fill fs-5"></i>
-                            </button>
-                            <button
-                              onClick={() => OpenModalCatalog(report.report_id)}
-                              className="btn btn-sm action-btnz d-flex align-items-center"
-                              title="Crear catálogo"
-                            >
-                              <i className="bi bi-file-earmark-text-fill fs-5"></i>
+                              <i className="bi bi-geo-alt-fill fs-6"></i>
                             </button>
                             <button
                               onClick={() =>
@@ -365,7 +342,7 @@ export default function ReportesPage() {
                               className="btn btn-sm action-btnz d-flex align-items-center"
                               title="Ver supervisor"
                             >
-                              <i className="bi bi-file-person-fill fs-5"></i>
+                              <i className="bi bi-file-person-fill fs-6"></i>
                             </button>
                           </div>
                         </td>
@@ -434,13 +411,6 @@ export default function ReportesPage() {
             latitude={showLocationReportModal.latitude}
             longitude={showLocationReportModal.longitude}
             onClose={() => setShowLocationReportModal(null)}
-          />
-        )}
-        {showCatalogueModal && selectedReportId && (
-          <CreateCatalogModal
-            reportId={selectedReportId}
-            onClose={() => setShowCatalogueModal(false)}
-            onCreated={handleCatalogCreated}
           />
         )}
       </div>

@@ -51,17 +51,7 @@ body {
   background-color: var(--background-color);
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
-}
-
-@media (min-width: 768px) {
-  .sidebar.offcanvas-md {
-    background-color: #611232 !important;
-  }
-}
-
-.sidebar {
-  background-color: #611232 !important;
+  overflow: hidden;
 }
 
 input[type="password"]::-ms-reveal,
@@ -142,4 +132,19 @@ input[type="password"]::-webkit-textfield-decoration-container * {
 
 .action-btnz:hover i {
   color: white !important;
+}
+
+.app-viewport {
+  height: 100vh;
+}
+@supports (height: 100dvh) {
+  .app-viewport {
+    height: 100dvh;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .modal-dialog {
+    margin: 0.5rem auto;
+  }
 }

@@ -5,7 +5,17 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { dashboard } from "@/lib/dashboardPage";
 import Image from "next/image";
+import Link from "next/link";
 import { rolePermissions } from "@/lib/permissions";
+import styles from "@/app/dashboard/dashboard.module.css";
+
+function hexToRgba(hex: string, alpha: number): string {
+  const value = hex.replace("#", "");
+  const r = parseInt(value.slice(0, 2), 16);
+  const g = parseInt(value.slice(2, 4), 16);
+  const b = parseInt(value.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 export default function DashboardPage() {
   const { user, isLoggedIn } = useAuth();
@@ -21,79 +31,63 @@ export default function DashboardPage() {
 
   const userPermissions = rolePermissions[user.role] ?? [];
 
-  const iconBackgrounds = [
-    "rgba(221, 22, 22, 0.12)",
-    "rgba(201, 221, 22, 0.2)",
-    "rgba(22, 137, 221, 0.14)",
-    "rgba(22, 25, 221, 0.14)",
-    "rgba(214, 22, 221, 0.16)",
-    "rgba(137, 22, 221, 0.18)",
-  ];
-
   return (
-    <div className="container-fluid py-4">
-      <div className="d-flex flex-column align-items-center mb-5 text-center">
-        <h1
-          className="fw-bold mb-2"
-          style={{ fontSize: "2rem", color: "#111827" }}
-        >
-          {dashboard.hero.title} {user.name} 👋
-        </h1>
-        <p className="text-secondary fs-5 mb-0">{dashboard.hero.subtitle}</p>
+    <div className="container-fluid py-4 px-lg-4">
+      <div className={styles.header}>
+        <div className={styles.headerGrow}>
+          <div className={styles.greetingRow}>
+            <h1 className={styles.greeting}>
+              {dashboard.hero.title}
+              {user.name}
+            </h1>
+            <span className={styles.roleBadge}>
+              <i className="bi bi-person-gear"></i>
+              {user.role}
+            </span>
+          </div>
+          <p className={styles.subtitle}>{dashboard.hero.subtitle}</p>
+        </div>
       </div>
 
-      <div className="row g-4 justify-content-center">
+      <h2 className={styles.sectionTitle}>{dashboard.section}</h2>
+
+      <div className="row g-4">
         {dashboard.cards
           .filter((card) => userPermissions.includes(card.permission))
-          .map((card, index) => {
-            const iconBg = iconBackgrounds[index % iconBackgrounds.length];
-
-            return (
-              <div
-                key={card.title}
-                className="col-12 col-sm-6 col-lg-4 col-xl-3 d-flex justify-content-center"
+          .map((card) => (
+            <div
+              key={card.title}
+              className="col-12 col-sm-6 col-lg-4 col-xl-3"
+            >
+              <Link
+                href={card.url}
+                className={styles.card}
+                style={
+                  {
+                    "--card-accent": card.color,
+                    "--card-tint": hexToRgba(card.color, 0.12),
+                    "--card-shadow": hexToRgba(card.color, 0.22),
+                  } as React.CSSProperties
+                }
+                aria-label={card.title}
               >
-                <div
-                  className="card border border-light-subtle shadow-sm h-100 align-items-center text-center p-4 w-100"
-                  style={{
-                    cursor: "pointer",
-                    borderRadius: "12px",
-                    transition: "transform 0.2s, box-shadow 0.2s",
-                  }}
-                  onClick={() => router.push(card.url)}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-5px)";
-                    e.currentTarget.style.boxShadow =
-                      "0 .5rem 1rem rgba(0,0,0,.15)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow =
-                      "0 .125rem .25rem rgba(0,0,0,.075)";
-                  }}
+                <span
+                  className={styles.iconChip}
+                  aria-hidden="true"
                 >
-                  <div
-                    className="d-flex align-items-center justify-content-center rounded-circle mb-3"
-                    style={{
-                      width: "4rem",
-                      height: "4rem",
-                      backgroundColor: iconBg,
-                    }}
-                  >
-                    <Image
-                      src={card.icon}
-                      alt={card.title}
-                      width={36}
-                      height={36}
-                    />
-                  </div>
+                  <Image src={card.icon} alt="" width={30} height={30} />
+                </span>
 
-                  <h5 className="fw-semibold mb-2 text-dark">{card.title}</h5>
-                  <p className="text-muted small mb-0">{card.desc}</p>
-                </div>
-              </div>
-            );
-          })}
+                <h3 className={styles.cardTitle}>{card.title}</h3>
+                <p className={styles.cardDesc}>{card.desc}</p>
+
+                <span className={styles.cardFooter}>
+                  Abrir
+                  <i className="bi bi-arrow-right"></i>
+                </span>
+              </Link>
+            </div>
+          ))}
       </div>
     </div>
   );

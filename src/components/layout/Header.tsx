@@ -1,88 +1,234 @@
 "use client";
 
+import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { usePathname } from "next/navigation";
+import { useNotifications } from "@/hooks/useNotifications";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import Notification from "@/assets/Notification.svg";
+import Link from "next/link";
+import NotificationIcon from "@/assets/Notification.svg";
+import { NotificationItem } from "@/utils/types";
+import styles from "@/components/layout/layout.module.css";
 
 export function Header() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const { notifications, unreadCount, markAllAsRead } = useNotifications();
   const pathname = usePathname();
+  const router = useRouter();
+
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
 
   if (!user) return null;
 
-  const handleCloseSesion = () => {
-    logout();
+  const handleToggleDropdown = () => {
+    const nextState = !isOpen;
+    setIsOpen(nextState);
+    if (nextState && unreadCount > 0) {
+      markAllAsRead();
+    }
+  };
+
+  const handleNotificationClick = (reportId?: number | null) => {
+    setIsOpen(false);
+    if (reportId) {
+      router.push(`/dashboard/reportes?report_id=${reportId}`);
+    } else {
+      router.push(`/dashboard/reportes`);
+    }
+  };
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return "";
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleString("es-MX", {
+        dateStyle: "short",
+        timeStyle: "short",
+      });
+    } catch {
+      return dateStr;
+    }
   };
 
   const getTitle = () => {
     if (pathname.includes("/dashboard/resumen")) return "Panel Resumen";
-    if (pathname.includes("/dashboard/analisis")) return "Análisis Económico";
     if (pathname.includes("/dashboard/reportes")) return "Reportes Ciudadanos";
     if (pathname.includes("/dashboard/usuarios")) return "Gestión de Usuarios";
-    if (pathname.includes("/dashboard/catalogo"))
-      return "Catalogo de Conceptos";
     if (pathname.includes("/dashboard/ciudadanos"))
       return "Gestión de Ciudadanos";
     if (pathname.includes("/dashboard/profile")) return "Mi Perfil";
     return "Dashboard";
   };
 
+  const recentNotifications = notifications.slice(0, 5);
+
   return (
-    <header
-      className="navbar navbar-expand-md navbar-light bg-white border-bottom sticky-top py-3 px-3 px-md-4 shadow-sm"
-      style={{ height: "80px" }}
-    >
-      <div className="container-fluid p-0">
+    <header className={styles.header}>
+      <div className={styles.headerInner}>
         <button
-          className="navbar-toggler d-md-none me-3 border-0 p-0"
+          className={`${styles.toggleBtn} d-md-none`}
           type="button"
           data-bs-toggle="offcanvas"
           data-bs-target="#sidebarMenu"
           aria-controls="sidebarMenu"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
+          aria-label="Abrir menú"
         >
-          <span className="navbar-toggler-icon"></span>
+          <i className="bi bi-list"></i>
         </button>
 
-        <h1 className="h4 m-0 flex-grow-1 fw-bold text-dark text-truncate">
-          {getTitle()}
-        </h1>
+        <h1 className={styles.headerTitle}>{getTitle()}</h1>
 
-        <div className="d-flex align-items-center">
-          {pathname.includes("/dashboard/profile") ? (
+        <div className={styles.headerActions}>
+          <div className="dropdown position-relative" ref={dropdownRef}>
             <button
               type="button"
-              onClick={handleCloseSesion}
-              className="btn btn-link p-0 border-0 d-flex align-items-center text-decoration-none"
-              title="Cerrar Sesión"
+              onClick={handleToggleDropdown}
+              className={styles.bellBtn}
+              aria-label={
+                unreadCount > 0
+                  ? `Notificaciones (${unreadCount} no leídas)`
+                  : "Notificaciones"
+              }
+              aria-expanded={isOpen}
+              aria-haspopup="true"
+              id="notificationsDropdownButton"
             >
-              <span className="d-none d-sm-inline me-2 text-secondary fw-medium">
-                Salir
-              </span>
+                  <Image
+                    src={NotificationIcon}
+                    alt="Icono Notificaciones"
+                    width={24}
+                    height={24}
+                  />
+                  {unreadCount > 0 && (
+                    <span
+                      className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-flex align-items-center justify-content-center"
+                      style={{
+                        fontSize: "0.65rem",
+                        minWidth: "18px",
+                        height: "18px",
+                        padding: "2px 4px",
+                      }}
+                    >
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                      <span className="visually-hidden">
+                        notificaciones no leídas
+                      </span>
+                    </span>
+                  )}
+                </button>
 
-              <i
-                className="bi bi-box-arrow-right fs-4 text-danger"
-                style={{ cursor: "pointer" }}
-              ></i>
-            </button>
-          ) : (
-            <div
-              className="position-relative cursor-pointer"
-              title="Notificaciones"
-            >
-              <Image
-                src={Notification}
-                alt="Icono Notificaciones"
-                width={28}
-                height={28}
-              />
-              <span className="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-                <span className="visually-hidden">Nuevas alertas</span>
-              </span>
-            </div>
-          )}
+                {isOpen && (
+                  <div
+                    className={styles.notifPanel}
+                    aria-labelledby="notificationsDropdownButton"
+                  >
+                    <div className={styles.notifHeader}>
+                      <span className={styles.notifTitle}>
+                        <i className="bi bi-bell-fill"></i>
+                        Notificaciones
+                      </span>
+                      <span className={styles.notifCount}>
+                        {notifications.length}
+                      </span>
+                    </div>
+
+                    <div className={styles.notifList}>
+                      {recentNotifications.length > 0 ? (
+                        recentNotifications.map(
+                          (item: NotificationItem, idx: number) => (
+                            <button
+                              key={item.id ? `${item.id}-${idx}` : idx}
+                              type="button"
+                              onClick={() =>
+                                handleNotificationClick(item.report_id)
+                              }
+                              className={`${styles.notifItem} ${
+                                !item.is_read ? styles.notifItemUnread : ""
+                              }`}
+                            >
+                              <span className={styles.notifIcon}>
+                                <Image
+                                  src={NotificationIcon}
+                                  alt=""
+                                  width={20}
+                                  height={20}
+                                />
+                              </span>
+                              <span className={styles.notifContent}>
+                                <span className={styles.notifMsg}>
+                                  {item.message}
+                                </span>
+                                {item.date && (
+                                  <span className={styles.notifTime}>
+                                    <i className="bi bi-clock"></i>
+                                    {formatDate(item.date)}
+                                  </span>
+                                )}
+                              </span>
+                              {!item.is_read && (
+                                <span
+                                  className={styles.notifDot}
+                                  aria-hidden="true"
+                                />
+                              )}
+                            </button>
+                          )
+                        )
+                      ) : (
+                        <div className={styles.notifEmpty}>
+                          <span className={styles.notifEmptyIcon}>
+                            <i className="bi bi-bell-slash"></i>
+                          </span>
+                          <strong>Sin notificaciones</strong>
+                          <small>
+                            Los nuevos reportes aparecerán aquí en tiempo real
+                          </small>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className={styles.notifFooter}>
+                      <Link
+                        href="/dashboard/reportes"
+                        className={styles.notifFooterLink}
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Ver todos los reportes
+                        <i className="bi bi-arrow-right"></i>
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
         </div>
       </div>
     </header>

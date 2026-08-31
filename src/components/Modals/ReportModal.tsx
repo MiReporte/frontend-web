@@ -47,8 +47,9 @@ function StatusTimeline({
 
       <div className="ps-2 position-relative">
         {steps.map((step, index) => {
-          const isCompleted = order[step] < order[status];
           const isCurrent = order[step] === order[status];
+          const isInHistory = !!history?.[step];
+          const isCompleted = isInHistory && !isCurrent;
 
           return (
             <div key={step} className="d-flex mb-4 position-relative">
