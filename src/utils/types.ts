@@ -49,6 +49,10 @@ export interface ResponseReports {
   longitude: number;
   description: string;
   evidence: string;
+  evidence1?: string;
+  evidence2?: string | null;
+  evidence3?: string | null;
+  evidences?: string[];
   assigned_supervisor: number | null;
   reporting_user: number | null;
   typereport: string;
@@ -96,6 +100,10 @@ export interface GetReportByIdResponse {
   date: string;
   description: string;
   evidence: string;
+  evidence1?: string;
+  evidence2?: string | null;
+  evidence3?: string | null;
+  evidences?: string[];
   latitude: number;
   longitude: number;
   report_id: number;
