@@ -1,0 +1,42 @@
+.iconBadge {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background-color: #aaa4ff2a;
+  color: #611232;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+}
+
+.iconBadge i {
+  font-size: 1.75rem;
+}
+
+.subtitle {
+  color: #5c5c5c;
+  font-size: 1rem;
+  margin: 0 0 1.75rem;
+}
+
+.back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  color: #611232;
+  text-decoration: none;
+  font-weight: 600;
+  transition: opacity 0.2s ease;
+}
+
+.back:hover {
+  opacity: 0.75;
+}
+
+.feedback {
+  font-size: 0.95rem;
+  margin: 0.25rem 0 0;
+}

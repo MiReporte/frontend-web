@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { verifyCode } from "@/services/verifyCode";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import logo from "@/assets/MiReporte.png";
+import styles from "@/app/login/login.module.css";
+import resetStyles from "@/app/reset-password/reset.module.css";
 
 export default function VerificarCodigoPage() {
   const [code, setCode] = useState("");
@@ -31,66 +35,81 @@ export default function VerificarCodigoPage() {
   };
 
   return (
-    <div
-      className="container d-flex flex-column align-items-center justify-content-center w-100"
-      style={{ maxWidth: "500px", height: "100vh" }}
-    >
-      <span
-        className="border rounded-4 d-flex align-items-center justify-content-center mb-4"
-        style={{ width: "60px", height: "60px", borderWidth: "3px" }}
-      >
-        <i className="bi bi-shield-lock fs-2"></i>
-      </span>
+    <main className={styles.login}>
+      <section className={styles.brand}>
+        <Image
+          src={logo}
+          alt="MiReporte Logo"
+          className={styles.brandLogo}
+          loading="eager"
+          priority
+        />
 
-      <h1>Verificar código</h1>
-      <p className="mb-5" style={{ color: "#706f6fff" }}>
-        Ingresa el código de verificación que enviamos a tu correo electrónico.
-      </p>
-
-      <form className="w-100" onSubmit={handleSubmit}>
-        <div className="mb-3">
-          <label htmlFor="code" className="form-label">
-            Código de verificación
-          </label>
-
-          <input
-            type="text"
-            className="form-control mb-2"
-            id="code"
-            value={code}
-            onChange={(e) => {
-              setCode(e.target.value);
-              setError("");
-            }}
-            placeholder="Ingresa el código"
-            required
-            maxLength={6}
-            style={{
-              height: "45px",
-              borderColor: error ? "#dc3545" : "#ced4da",
-            }}
-          />
-
-          {error && <small className="text-danger fw-semibold">{error}</small>}
-        </div>
-
-        <button
-          type="submit"
-          className="btn btn-primary w-100 fw-semibold"
-          style={{ height: "45px", backgroundColor: "#611232", color: "white" }}
+        <svg
+          className={styles.wave}
+          viewBox="0 0 1440 60"
+          preserveAspectRatio="none"
+          aria-hidden="true"
         >
-          Verificar código
-        </button>
-      </form>
+          <path
+            d="M0,30 C240,75 480,-15 720,20 C960,55 1200,0 1440,30 L1440,60 L0,60 Z"
+            fill="#f2f2f2"
+          />
+        </svg>
+      </section>
 
-      <a
-        className="d-flex align-items-center justify-content-center gap-2 mt-4 text-decoration-none"
-        style={{ cursor: "pointer", color: "#424242ff" }}
-        href="/reset-password"
-      >
-        <i className="bi bi-arrow-left fs-5"></i>
-        <p className="m-0 fw-semibold">Volver</p>
-      </a>
-    </div>
+      <section className={styles.panel}>
+        <div className={styles.card}>
+          <form onSubmit={handleSubmit} className={styles.form} noValidate>
+            <span className={`${resetStyles.iconBadge} d-flex`}>
+              <i className="bi bi-shield-lock"></i>
+            </span>
+
+            <h1 className={styles.title}>Verificar código</h1>
+            <p className={resetStyles.subtitle}>
+              Ingresa el código de verificación que enviamos a tu correo
+              electrónico.
+            </p>
+
+            <label htmlFor="code" className={styles.label}>
+              Código de verificación
+            </label>
+            <input
+              type="text"
+              id="code"
+              className={styles.input}
+              value={code}
+              onChange={(e) => {
+                setCode(e.target.value);
+                setError("");
+              }}
+              placeholder="Ingresa el código"
+              required
+              maxLength={6}
+              aria-invalid={!!error}
+              style={{ borderColor: error ? "#dc3545" : undefined }}
+            />
+
+            {error && (
+              <p className={`text-danger fw-semibold ${resetStyles.feedback}`}>
+                {error}
+              </p>
+            )}
+
+            <button type="submit" className={styles.button}>
+              Verificar código
+            </button>
+          </form>
+
+          <a
+            href="/reset-password"
+            className={`${resetStyles.back} text-decoration-none`}
+          >
+            <i className="bi bi-arrow-left"></i>
+            <span>Volver</span>
+          </a>
+        </div>
+      </section>
+    </main>
   );
 }

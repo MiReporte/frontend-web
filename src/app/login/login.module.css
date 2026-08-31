@@ -1,91 +1,146 @@
-.container {
-  display: flex;
-  height: 100vh;
-  width: 100vw;
-}
-
-.formContainer {
+.login {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  height: 100vh;
-  min-width: 45%;
-  color: #611232;
-  z-index: 2;
+  min-height: 100dvh;
+  width: 100%;
+  background-color: #f2f2f2;
 }
 
-.logoContainer {
+.brand {
   position: relative;
   display: flex;
-  height: 14rem;
-  width: 100%;
-}
-
-.fondo {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 0;
-  object-fit: contain;
-  object-position: top left;
-  width: 100%;
-  height: 100%;
-}
-
-.escudo,
-.logo {
-  margin-left: 1.5rem;
-  margin-top: 5rem;
-  z-index: 10;
-}
-
-.mapContainer {
-  display: flex;
-  justify-content: flex-end;
   align-items: center;
-  position: absolute;
-  background-color: #aaa4ff2a;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-height: 34vh;
+  padding: 2.5rem 1.5rem;
+  background: linear-gradient(150deg, #7a1b3f 0%, #611232 55%, #4a0d26 100%);
+  overflow: hidden;
 }
 
-.heroImage {
-  width: 60%;
-  height: 75%;
+.brand::before,
+.brand::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.09);
+  pointer-events: none;
+}
+
+.brand::before {
+  width: 340px;
+  height: 340px;
+  top: -130px;
+  left: -110px;
+  box-shadow: 0 0 0 40px rgba(255, 255, 255, 0.04);
+}
+
+.brand::after {
+  width: 260px;
+  height: 260px;
+  bottom: -120px;
+  right: -70px;
+  box-shadow: 0 0 0 32px rgba(255, 255, 255, 0.04);
+}
+
+.brandLogo {
+  position: relative;
+  z-index: 1;
+  width: min(78vw, 380px);
+  height: auto;
+  object-fit: contain;
+}
+
+.wave {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  width: 100%;
+  height: 42px;
+  color: #f2f2f2;
+  pointer-events: none;
+}
+
+.panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 2.5rem 1.25rem;
+  background: radial-gradient(
+    circle at 80% 20%,
+    rgba(170, 164, 255, 0.16) 0%,
+    rgba(170, 164, 255, 0) 55%
+  );
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  background-color: #fff;
+  border-radius: 20px;
+  box-shadow: 0 18px 45px rgba(77, 13, 38, 0.12);
+  padding: 2.5rem 2rem;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  margin-top: auto;
-  margin-bottom: auto;
-  width: 65%;
-  max-width: 400px;
 }
 
 .title {
-  font-size: 2.5rem;
-  margin-bottom: 3rem;
-  margin-top: 2rem;
-}
-
-.input {
-  padding: 10px 14px;
-  margin-bottom: 14px;
-  margin-top: 5px;
-  border: 1px solid #555555;
-  background-color: #aaa4ff2a;
-  border-radius: 10px;
-  font-size: 1rem;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #611232;
+  margin: 0 0 1.75rem;
 }
 
 .label {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 500;
   color: #2c2c2c;
+}
+
+.input {
+  width: 100%;
+  padding: 12px 14px;
+  margin: 6px 0 1rem;
+  border: 1px solid #c9c9c9;
+  background-color: #aaa4ff2a;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input::placeholder {
+  color: #929292;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #611232;
+  box-shadow: 0 0 0 3px rgba(97, 18, 50, 0.15);
+  background-color: #fff;
+}
+
+.passwordWrapper {
+  position: relative;
+}
+
+.eyeIcon {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  user-select: none;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.eyeIcon:hover {
+  opacity: 1;
 }
 
 .button {
@@ -94,47 +149,57 @@
   color: #f2f2f2;
   border: none;
   border-radius: 20px;
-  font-size: 1rem;
+  font-size: 1.05rem;
+  font-weight: 600;
   cursor: pointer;
-  margin-top: 20px;
-  margin-bottom: 2rem;
+  margin-top: 0.75rem;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .button:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  background-color: #4a0d26;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.35);
 }
 
 .forgotPassword {
-  font-size: 1.2rem;
+  font-size: 1rem;
   color: #611232;
   text-align: center;
-}
-
-.error {
-  font-size: 1rem;
-  text-align: center;
-}
-
-.passwordWrapper {
-  position: relative;
-}
-
-.passwordWrapper input {
-  width: 100%;
-}
-
-.eyeIcon {
-  position: absolute;
-  right: 16px;
-  top: 42%;
-  transform: translateY(-50%);
-  cursor: pointer;
-  user-select: none;
-  font-size: 1.2rem;
-  opacity: 0.6;
+  margin-top: 1.25rem;
+  text-decoration: none;
   transition: opacity 0.2s ease;
 }
 
-.eyeIcon:hover {
-  opacity: 1;
+.forgotPassword:hover {
+  opacity: 0.75;
+}
+
+.error {
+  font-size: 0.95rem;
+  color: #dc3545;
+  text-align: center;
+  margin: 0.25rem 0 0;
+}
+
+@media (min-width: 992px) {
+  .login {
+    flex-direction: row;
+  }
+
+  .brand {
+    width: 45%;
+    min-height: 100dvh;
+  }
+
+  .brandLogo {
+    width: min(70%, 420px);
+  }
+
+  .wave {
+    display: none;
+  }
+
+  .panel {
+    padding: 3rem;
+  }
 }

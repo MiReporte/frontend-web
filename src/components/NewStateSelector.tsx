@@ -31,7 +31,7 @@ const API_TO_UI: Record<string, string> = {
   NO_APROBADO: "No aprobado",
   PROCESO: "En proceso",
   COMPLETADO: "Completado",
-  CIERRE: "Cierre técnico",
+  CIERRE: "Cerrado",
 };
 
 const PERMISSION_REQUIRED: Record<string, string[]> = {
@@ -73,7 +73,13 @@ export function NewStateSelector({
   const handleChange = (newStatusUI: string) => {
     if (!user) return;
 
-    if (!PERMISSION_REQUIRED[user.role]?.includes(STATUS_API[newStatusUI])) {
+    const allowed = PERMISSION_REQUIRED[user.role];
+    if (!allowed) {
+      setAlertMessage("No tienes permiso para cambiar estados.");
+      return;
+    }
+
+    if (!allowed.includes(STATUS_API[newStatusUI])) {
       setAlertMessage("No tienes permiso para cambiar a este estado.");
       return;
     }
@@ -115,14 +121,18 @@ export function NewStateSelector({
             value={status}
             disabled={loading}
             onChange={(e) => handleChange(e.target.value)}
-            className={`form-select fw-bold rounded-pill px-3 py-1 text-white noArrow ${selectClass}`}
-            style={{ width: "10rem" }}
+            className={`form-select fw-bold rounded-pill px-3 py-1 text-white noArrow ${selectClass} ${styles.stateSelect}`}
           >
-            {UI_STATUS.map((label) => (
-              <option key={label} value={label}>
-                {label}
-              </option>
-            ))}
+            {UI_STATUS.map((label) => {
+              const apiCode = STATUS_API[label];
+              const allowed = user ? PERMISSION_REQUIRED[user.role] : undefined;
+              const isDisabled = allowed ? !allowed.includes(apiCode) : true;
+              return (
+                <option key={label} value={label} disabled={isDisabled}>
+                  {label}
+                </option>
+              );
+            })}
           </select>
           <i className="bi bi-chevron-down selectIcon"></i>
         </div>
