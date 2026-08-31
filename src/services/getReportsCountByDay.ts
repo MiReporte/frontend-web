@@ -15,11 +15,9 @@ export async function getReportsCountByDay(
   token: string,
   typeFilter: "BACHE" | "ALUM" | null
 ): Promise<ReportCountByDay> {
-  const url = `${API_URL}/reports/count-by-day`;
-  const params: { type?: "BACHE" | "ALUM" } = {};
-
+  let url = `${API_URL}/reports/count-by-day`;
   if (typeFilter) {
-    params.type = typeFilter;
+    url += `?type=${encodeURIComponent(typeFilter)}`;
   }
 
   try {
