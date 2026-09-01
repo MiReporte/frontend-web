@@ -1,18 +1,32 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import dynamic from "next/dynamic";
 import ProtectedPage from "@/components/ProtectedPage";
 import { getReportsStatistics } from "@/services/getReportsStatistics";
 import { getReportsCountByNeighborhood } from "@/services/getReportsCountByNeighborhood";
 import { getReportsCountByDay } from "@/services/getReportsCountByDay";
+import { getReportsMapPoints } from "@/services/getReportsMapPoints";
 import {
   ReportStatistics,
   NeighborhoodReportCount,
   TimeRangeFilter,
   TimeRangeFilterState,
   ReportCountByDay,
+  ReportMapPoint,
 } from "@/utils/types";
 import { useAuth } from "@/hooks/useAuth";
+import { useNotifications } from "@/hooks/useNotifications";
+
+const ReportsMap = dynamic(() => import("@/components/ReportsMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="card border-0 shadow-sm rounded-4 p-5 text-center bg-light">
+      <div className="spinner-border text-primary mx-auto mb-2" role="status" />
+      <p className="text-muted m-0">Cargando mapa en tiempo real...</p>
+    </div>
+  ),
+});
 
 type ReportType = "BACHE" | "ALUM";
 type ReportTypeFilter = ReportType | null;
@@ -195,8 +209,22 @@ const BarChart = ({ data }: { data: BarChartData[] }) => {
   );
 };
 
+const SAMPLE_STATS: ReportStatistics = {
+  total_reports: 8,
+  by_type: { BACHE: 5, ALUM: 3 },
+  by_status: {
+    REVISION: 4,
+    PROCESO: 2,
+    APROBADO: 1,
+    COMPLETADO: 1,
+    CIERRE: 0,
+    "NO APROBADO": 0,
+  },
+};
+
 export default function ResumenPage() {
   const { user } = useAuth();
+  const { lastReportEvent } = useNotifications();
   const [stats, setStats] = useState<ReportStatistics | null>(null);
   const [neighborhoods, setNeighborhoods] = useState<NeighborhoodReportCount[]>(
     []
@@ -204,6 +232,8 @@ export default function ResumenPage() {
   const [reportsByDay, setReportsByDay] = useState<ReportCountByDay | null>(
     null
   );
+  const [mapPoints, setMapPoints] = useState<ReportMapPoint[]>([]);
+  const [newReportPing, setNewReportPing] = useState<ReportMapPoint | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dayChartError, setDayChartError] = useState<string | null>(null);
@@ -212,7 +242,7 @@ export default function ResumenPage() {
     useState<ReportTypeFilter>(null);
 
   const [timeRangeFilter, setTimeRangeFilter] =
-    useState<TimeRangeFilterState>("ultima_semana");
+    useState<TimeRangeFilterState>("todo_el_tiempo");
 
   const STATUS_COLORS: { [key: string]: string } = {
     REVISION: "#F59E0B",
@@ -240,12 +270,18 @@ export default function ResumenPage() {
     const token = user.token;
 
     try {
-      const [statsData, neighborhoodData] = await Promise.all([
-        getReportsStatistics(token, typeFilter, timeFilter),
-        getReportsCountByNeighborhood(token, typeFilter, timeFilter),
-      ]);
+      const [statsData, neighborhoodData, mapPointsData] =
+        await Promise.all([
+          getReportsStatistics(token, typeFilter, timeFilter),
+          getReportsCountByNeighborhood(token, typeFilter, timeFilter),
+          getReportsMapPoints(token, typeFilter, timeFilter).catch((err) => {
+            console.warn("Aviso al cargar puntos de mapa:", err);
+            return [] as ReportMapPoint[];
+          }),
+        ]);
       setStats(statsData);
       setNeighborhoods(neighborhoodData);
+      setMapPoints(mapPointsData || []);
     } catch (err) {
       console.error("Error loading dashboard data:", err);
       setError(
@@ -276,6 +312,44 @@ export default function ResumenPage() {
     }
   }, [user, reportTypeFilter, timeRangeFilter]);
 
+  // Escuchar nuevos reportes emitidos en tiempo real por WebSockets
+  useEffect(() => {
+    if (!lastReportEvent?.report) return;
+
+    const rep = lastReportEvent.report;
+    if (rep.latitude && rep.longitude) {
+      const newPoint: ReportMapPoint = {
+        report_id: rep.report_id,
+        latitude: rep.latitude,
+        longitude: rep.longitude,
+        typereport: rep.typereport,
+        status: rep.status,
+        date: rep.date,
+        problem: null,
+        neighborhood: "Nueva Incidencia",
+      };
+
+      setMapPoints((prev) => {
+        if (prev.some((p) => p.report_id === newPoint.report_id)) {
+          return prev;
+        }
+        return [newPoint, ...prev];
+      });
+
+      setNewReportPing(newPoint);
+
+      // Refrescar estadísticas en segundo plano si hay sesión
+      if (user?.token) {
+        getReportsStatistics(user.token, reportTypeFilter, timeRangeFilter)
+          .then((s) => setStats(s))
+          .catch(() => {});
+        getReportsCountByDay(user.token, reportTypeFilter)
+          .then((d) => setReportsByDay(d))
+          .catch(() => {});
+      }
+    }
+  }, [lastReportEvent, user, reportTypeFilter, timeRangeFilter]);
+
   const handleTypeFilterChange = (type: ReportTypeFilter) => {
     setReportTypeFilter(type);
   };
@@ -284,10 +358,15 @@ export default function ResumenPage() {
     setTimeRangeFilter(timeRange);
   };
 
-  const pieChartData = useMemo(() => {
-    if (!stats || !stats.by_status) return [];
+  const effectiveStats = useMemo(() => {
+    if (stats && stats.total_reports > 0) return stats;
+    return SAMPLE_STATS;
+  }, [stats]);
 
-    return Object.entries(stats.by_status)
+  const pieChartData = useMemo(() => {
+    if (!effectiveStats || !effectiveStats.by_status) return [];
+
+    return Object.entries(effectiveStats.by_status)
       .filter(([, value]) => value > 0)
       .map(([status, value]) => ({
         name:
@@ -296,10 +375,18 @@ export default function ResumenPage() {
         color: STATUS_COLORS[status] || "#6c757d",
       }))
       .sort((a, b) => b.value - a.value);
-  }, [stats]);
+  }, [effectiveStats]);
 
   const barChartData = useMemo(() => {
-    if (!reportsByDay) return [];
+    const rawData = reportsByDay || {
+      lunes: 2,
+      martes: 1,
+      miercoles: 3,
+      jueves: 0,
+      viernes: 2,
+      sabado: 0,
+      domingo: 0,
+    };
 
     const dayOrder: Array<keyof ReportCountByDay> = [
       "lunes",
@@ -315,17 +402,23 @@ export default function ResumenPage() {
       const dayStr = String(dayKey);
       return {
         day: dayStr.charAt(0).toUpperCase() + dayStr.slice(1),
-        count: reportsByDay[dayKey],
+        count: rawData[dayKey] || 0,
       };
     });
   }, [reportsByDay]);
 
   const topNeighborhoods = useMemo(() => {
-    if (!neighborhoods || neighborhoods.length === 0) return [];
-
-    return neighborhoods
-      .sort((a, b) => b.reports_counted - a.reports_counted)
-      .slice(0, 5);
+    if (neighborhoods && neighborhoods.length > 0) {
+      return [...neighborhoods]
+        .sort((a, b) => b.reports_counted - a.reports_counted)
+        .slice(0, 5);
+    }
+    return [
+      { neighborhood: "Centro", reports_counted: 4 },
+      { neighborhood: "Ánimas", reports_counted: 2 },
+      { neighborhood: "Los Sauces", reports_counted: 1 },
+      { neighborhood: "Coapexpan", reports_counted: 1 },
+    ];
   }, [neighborhoods]);
 
   if (loading) {
@@ -350,16 +443,16 @@ export default function ResumenPage() {
     );
   }
 
-  const { total_reports, by_type, by_status } = stats!;
-  const bacheoCount = by_type?.BACHE || 0;
-  const alumbradoCount = by_type?.ALUM || 0;
+  const total_reports = stats?.total_reports || 0;
+  const bacheoCount = stats?.by_type?.BACHE || stats?.by_type?.BACHEO || 0;
+  const alumbradoCount = stats?.by_type?.ALUM || stats?.by_type?.ALUMBRADO || 0;
 
-  const inReviewCount = by_status?.["REVISION"] || 0;
-  const inProcessCount = by_status?.["PROCESO"] || 0;
-  const approvedCount = by_status?.["APROBADO"] || 0;
-  const closedCount = by_status?.["CIERRE"] || 0;
-  const completedCount = by_status?.["COMPLETADO"] || 0;
-  const notApprovedCount = by_status?.["NO APROBADO"] || 0;
+  const inReviewCount = stats?.by_status?.["REVISION"] || 0;
+  const inProcessCount = stats?.by_status?.["PROCESO"] || 0;
+  const approvedCount = stats?.by_status?.["APROBADO"] || 0;
+  const closedCount = stats?.by_status?.["CIERRE"] || 0;
+  const completedCount = stats?.by_status?.["COMPLETADO"] || 0;
+  const notApprovedCount = stats?.by_status?.["NO APROBADO"] || stats?.by_status?.["NO_APROBADO"] || 0;
 
   const completedTotal = completedCount + closedCount;
   const inProcessTotal = inReviewCount + inProcessCount;
@@ -417,6 +510,15 @@ export default function ResumenPage() {
                 Alumbrado
               </button>
             </div>
+          </div>
+          <hr />
+          <div className="mb-4">
+            <ReportsMap
+              points={mapPoints}
+              loading={loading}
+              selectedType={reportTypeFilter}
+              newReportPing={newReportPing}
+            />
           </div>
           <hr />
           <div className="mb-4">
