@@ -3,78 +3,112 @@
 import { useState } from "react";
 import { recoverRequest } from "@/services/recoverRequest";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import logo from "@/assets/MiReporte.png";
+import styles from "@/app/login/login.module.css";
+import resetStyles from "@/app/reset-password/reset.module.css";
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError("");
 
     const res = await recoverRequest(email);
 
-    if (res) {
-      localStorage.setItem("verification_token", res.verification_token);
-      router.push("/reset-password/verify");
+    if (!res || "error" in res) {
+      setError(res.error || "No se pudo procesar la solicitud.");
+      return;
     }
+
+    if (!res.verification_token) {
+      setError(
+        "El correo no está registrado en el sistema. Verifica e inténtalo de nuevo."
+      );
+      return;
+    }
+
+    localStorage.setItem("verification_token", res.verification_token);
+    router.push("/reset-password/verify");
   };
 
   return (
-    <div
-      className="container d-flex flex-column align-items-center justify-content-center w-100"
-      style={{ maxWidth: "500px", height: "100vh" }}
-    >
-      <span
-        className="border rounded-4 d-flex align-items-center justify-content-center mb-4"
-        style={{ width: "60px", height: "60px", borderWidth: "3px" }}
-      >
-        <i className="bi bi-fingerprint fs-2"></i>
-      </span>
+    <main className={styles.login}>
+      <section className={styles.brand}>
+        <Image
+          src={logo}
+          alt="MiReporte Logo"
+          className={styles.brandLogo}
+          loading="eager"
+          priority
+        />
 
-      <h1>¿Olvidaste tu contraseña?</h1>
-
-      <p className="mb-5" style={{ color: "#706f6fff" }}>
-        Ingresa tu correo electrónico para restablecer tu contraseña.
-      </p>
-
-      <form className="w-100" onSubmit={handleSubmit}>
-        <div className="mb-3">
-          <label htmlFor="email" className="form-label">
-            Correo electrónico
-          </label>
-          <input
-            type="email"
-            className="form-control mb-4"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Ingresa tu correo electrónico"
-            required
-            style={{ height: "45px" }}
-          />
-        </div>
-
-        <button
-          type="submit"
-          className="btn w-100 fw-semibold"
-          style={{
-            height: "45px",
-            backgroundColor: "#611232",
-            color: "white",
-          }}
+        <svg
+          className={styles.wave}
+          viewBox="0 0 1440 60"
+          preserveAspectRatio="none"
+          aria-hidden="true"
         >
-          Restablecer contraseña
-        </button>
-      </form>
+          <path
+            d="M0,30 C240,75 480,-15 720,20 C960,55 1200,0 1440,30 L1440,60 L0,60 Z"
+            fill="#f2f2f2"
+          />
+        </svg>
+      </section>
 
-      <a
-        className="d-flex align-items-center justify-content-center gap-2 mt-4 text-decoration-none"
-        style={{ cursor: "pointer", color: "#424242ff" }}
-        href="/login"
-      >
-        <i className="bi bi-arrow-left fs-5"></i>
-        <p className="m-0 fw-semibold">Iniciar sesión</p>
-      </a>
-    </div>
+      <section className={styles.panel}>
+        <div className={styles.card}>
+          <form onSubmit={handleSubmit} className={styles.form} noValidate>
+            <span className={`${resetStyles.iconBadge} d-flex`}>
+              <i className="bi bi-fingerprint"></i>
+            </span>
+
+            <h1 className={styles.title}>¿Olvidaste tu contraseña?</h1>
+            <p className={resetStyles.subtitle}>
+              Ingresa tu correo electrónico para restablecer tu contraseña.
+            </p>
+
+            <label htmlFor="email" className={styles.label}>
+              Correo electrónico
+            </label>
+            <input
+              type="email"
+              id="email"
+              className={styles.input}
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError("");
+              }}
+              placeholder="Ingresa tu correo electrónico"
+              required
+              aria-invalid={!!error}
+              style={{ borderColor: error ? "#dc3545" : undefined }}
+            />
+
+            {error && (
+              <p className={`text-danger fw-semibold ${resetStyles.feedback}`}>
+                {error}
+              </p>
+            )}
+
+            <button type="submit" className={styles.button}>
+              Restablecer contraseña
+            </button>
+          </form>
+
+          <a
+            href="/login"
+            className={`${resetStyles.back} text-decoration-none`}
+          >
+            <i className="bi bi-arrow-left"></i>
+            <span>Iniciar sesión</span>
+          </a>
+        </div>
+      </section>
+    </main>
   );
 }

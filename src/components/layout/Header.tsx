@@ -8,9 +8,10 @@ import Image from "next/image";
 import Link from "next/link";
 import NotificationIcon from "@/assets/Notification.svg";
 import { NotificationItem } from "@/utils/types";
+import styles from "@/components/layout/layout.module.css";
 
 export function Header() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { notifications, unreadCount, markAllAsRead } = useNotifications();
   const pathname = usePathname();
   const router = useRouter();
@@ -47,10 +48,6 @@ export function Header() {
 
   if (!user) return null;
 
-  const handleCloseSesion = () => {
-    logout();
-  };
-
   const handleToggleDropdown = () => {
     const nextState = !isOpen;
     setIsOpen(nextState);
@@ -84,10 +81,8 @@ export function Header() {
 
   const getTitle = () => {
     if (pathname.includes("/dashboard/resumen")) return "Panel Resumen";
-    if (pathname.includes("/dashboard/analisis")) return "Análisis Económico";
     if (pathname.includes("/dashboard/reportes")) return "Reportes Ciudadanos";
     if (pathname.includes("/dashboard/usuarios")) return "Gestión de Usuarios";
-    if (pathname.includes("/dashboard/catalogo")) return "Catalogo de Conceptos";
     if (pathname.includes("/dashboard/ciudadanos"))
       return "Gestión de Ciudadanos";
     if (pathname.includes("/dashboard/profile")) return "Mi Perfil";
@@ -97,178 +92,143 @@ export function Header() {
   const recentNotifications = notifications.slice(0, 5);
 
   return (
-    <header
-      className="navbar navbar-expand-md navbar-light bg-white border-bottom sticky-top py-3 px-3 px-md-4 shadow-sm"
-      style={{ height: "80px" }}
-    >
-      <div className="container-fluid p-0">
+    <header className={styles.header}>
+      <div className={styles.headerInner}>
         <button
-          className="navbar-toggler d-md-none me-3 border-0 p-0"
+          className={`${styles.toggleBtn} d-md-none`}
           type="button"
           data-bs-toggle="offcanvas"
           data-bs-target="#sidebarMenu"
           aria-controls="sidebarMenu"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
+          aria-label="Abrir menú"
         >
-          <span className="navbar-toggler-icon"></span>
+          <i className="bi bi-list"></i>
         </button>
 
-        <h1 className="h4 m-0 flex-grow-1 fw-bold text-dark text-truncate">
-          {getTitle()}
-        </h1>
+        <h1 className={styles.headerTitle}>{getTitle()}</h1>
 
-        <div className="d-flex align-items-center">
-          {pathname.includes("/dashboard/profile") ? (
+        <div className={styles.headerActions}>
+          <div className="dropdown position-relative" ref={dropdownRef}>
             <button
               type="button"
-              onClick={handleCloseSesion}
-              className="btn btn-link p-0 border-0 d-flex align-items-center text-decoration-none"
-              title="Cerrar Sesión"
+              onClick={handleToggleDropdown}
+              className={styles.bellBtn}
+              aria-label={
+                unreadCount > 0
+                  ? `Notificaciones (${unreadCount} no leídas)`
+                  : "Notificaciones"
+              }
+              aria-expanded={isOpen}
+              aria-haspopup="true"
+              id="notificationsDropdownButton"
             >
-              <span className="d-none d-sm-inline me-2 text-secondary fw-medium">
-                Salir
-              </span>
-
-              <i
-                className="bi bi-box-arrow-right fs-4 text-danger"
-                style={{ cursor: "pointer" }}
-              ></i>
-            </button>
-          ) : (
-            <div className="dropdown position-relative" ref={dropdownRef}>
-              <button
-                type="button"
-                onClick={handleToggleDropdown}
-                className="btn btn-link p-0 border-0 position-relative text-decoration-none"
-                aria-label={
-                  unreadCount > 0
-                    ? `Notificaciones (${unreadCount} no leídas)`
-                    : "Notificaciones"
-                }
-                aria-expanded={isOpen}
-                aria-haspopup="true"
-                id="notificationsDropdownButton"
-              >
-                <Image
-                  src={NotificationIcon}
-                  alt="Icono Notificaciones"
-                  width={28}
-                  height={28}
-                />
-                {unreadCount > 0 && (
-                  <span
-                    className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-flex align-items-center justify-content-center"
-                    style={{
-                      fontSize: "0.65rem",
-                      minWidth: "18px",
-                      height: "18px",
-                      padding: "2px 4px",
-                    }}
-                  >
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                    <span className="visually-hidden">
-                      notificaciones no leídas
-                    </span>
-                  </span>
-                )}
-              </button>
-
-              {isOpen && (
-                <div
-                  className="dropdown-menu dropdown-menu-end show shadow-lg border-0 p-0 mt-2"
-                  style={{
-                    position: "absolute",
-                    top: "100%",
-                    right: 0,
-                    left: "auto",
-                    width: "320px",
-                    maxWidth: "calc(100vw - 32px)",
-                    borderRadius: "12px",
-                    zIndex: 1050,
-                  }}
-                  aria-labelledby="notificationsDropdownButton"
-                >
-                  <div
-                    className="d-flex justify-content-between align-items-center px-3 py-2 text-white"
-                    style={{
-                      backgroundColor: "#611232",
-                      borderTopLeftRadius: "12px",
-                      borderTopRightRadius: "12px",
-                    }}
-                  >
-                    <span className="fw-bold small">Notificaciones</span>
-                    {notifications.length > 0 && (
-                      <span className="badge bg-white text-dark small">
-                        {notifications.length} total
+                  <Image
+                    src={NotificationIcon}
+                    alt="Icono Notificaciones"
+                    width={24}
+                    height={24}
+                  />
+                  {unreadCount > 0 && (
+                    <span
+                      className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-flex align-items-center justify-content-center"
+                      style={{
+                        fontSize: "0.65rem",
+                        minWidth: "18px",
+                        height: "18px",
+                        padding: "2px 4px",
+                      }}
+                    >
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                      <span className="visually-hidden">
+                        notificaciones no leídas
                       </span>
-                    )}
-                  </div>
+                    </span>
+                  )}
+                </button>
 
+                {isOpen && (
                   <div
-                    style={{
-                      maxHeight: "340px",
-                      overflowY: "auto",
-                    }}
+                    className={styles.notifPanel}
+                    aria-labelledby="notificationsDropdownButton"
                   >
-                    {recentNotifications.length > 0 ? (
-                      recentNotifications.map(
-                        (item: NotificationItem, idx: number) => (
-                          <button
-                            key={item.id ? `${item.id}-${idx}` : idx}
-                            type="button"
-                            onClick={() =>
-                              handleNotificationClick(item.report_id)
-                            }
-                            className={`dropdown-item p-3 border-bottom text-wrap text-start d-flex flex-column gap-1 ${
-                              !item.is_read ? "bg-light" : ""
-                            }`}
-                            style={{ whiteSpace: "normal" }}
-                          >
-                            <div className="d-flex justify-content-between align-items-start w-100">
-                              <span className="fw-semibold small text-dark">
-                                {item.message}
+                    <div className={styles.notifHeader}>
+                      <span className={styles.notifTitle}>
+                        <i className="bi bi-bell-fill"></i>
+                        Notificaciones
+                      </span>
+                      <span className={styles.notifCount}>
+                        {notifications.length}
+                      </span>
+                    </div>
+
+                    <div className={styles.notifList}>
+                      {recentNotifications.length > 0 ? (
+                        recentNotifications.map(
+                          (item: NotificationItem, idx: number) => (
+                            <button
+                              key={item.id ? `${item.id}-${idx}` : idx}
+                              type="button"
+                              onClick={() =>
+                                handleNotificationClick(item.report_id)
+                              }
+                              className={`${styles.notifItem} ${
+                                !item.is_read ? styles.notifItemUnread : ""
+                              }`}
+                            >
+                              <span className={styles.notifIcon}>
+                                <Image
+                                  src={NotificationIcon}
+                                  alt=""
+                                  width={20}
+                                  height={20}
+                                />
+                              </span>
+                              <span className={styles.notifContent}>
+                                <span className={styles.notifMsg}>
+                                  {item.message}
+                                </span>
+                                {item.date && (
+                                  <span className={styles.notifTime}>
+                                    <i className="bi bi-clock"></i>
+                                    {formatDate(item.date)}
+                                  </span>
+                                )}
                               </span>
                               {!item.is_read && (
                                 <span
-                                  className="badge bg-primary rounded-pill ms-1"
-                                  style={{ fontSize: "0.55rem" }}
-                                >
-                                  Nueva
-                                </span>
+                                  className={styles.notifDot}
+                                  aria-hidden="true"
+                                />
                               )}
-                            </div>
-                            {item.date && (
-                              <small className="text-muted" style={{ fontSize: "0.75rem" }}>
-                                <i className="bi bi-clock me-1"></i>
-                                {formatDate(item.date)}
-                              </small>
-                            )}
-                          </button>
+                            </button>
+                          )
                         )
-                      )
-                    ) : (
-                      <div className="p-4 text-center text-muted">
-                        <i className="bi bi-bell-slash fs-3 d-block mb-2 text-secondary"></i>
-                        <span className="small">No hay notificaciones</span>
-                      </div>
-                    )}
-                  </div>
+                      ) : (
+                        <div className={styles.notifEmpty}>
+                          <span className={styles.notifEmptyIcon}>
+                            <i className="bi bi-bell-slash"></i>
+                          </span>
+                          <strong>Sin notificaciones</strong>
+                          <small>
+                            Los nuevos reportes aparecerán aquí en tiempo real
+                          </small>
+                        </div>
+                      )}
+                    </div>
 
-                  <div className="p-2 border-top bg-light text-center">
-                    <Link
-                      href="/dashboard/reportes"
-                      className="btn btn-sm btn-link text-decoration-none fw-medium"
-                      style={{ color: "#611232", fontSize: "0.85rem" }}
-                      onClick={() => setIsOpen(false)}
-                    >
-                      Ver todos los reportes
-                    </Link>
+                    <div className={styles.notifFooter}>
+                      <Link
+                        href="/dashboard/reportes"
+                        className={styles.notifFooterLink}
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Ver todos los reportes
+                        <i className="bi bi-arrow-right"></i>
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
         </div>
       </div>
     </header>

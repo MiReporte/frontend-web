@@ -8,9 +8,7 @@ import { NewStateSelector } from "@/components/NewStateSelector";
 import { UpdateSupervisorModal } from "@/components/Modals/UpdateSupervisorModal";
 import { ReportModal } from "@/components/Modals/ReportModal";
 import { ViewLocationReport } from "@/components/Modals/ViewLocationReport";
-import { getCatalogueByReport } from "@/services/getCatalogueByReport";
 import { useRouter, useSearchParams } from "next/navigation";
-import CreateCatalogModal from "@/components/Modals/CreateCatalogueModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotifications } from "@/hooks/useNotifications";
 import { getSupervisorReports } from "@/services/getSupervisorReports";
@@ -34,8 +32,6 @@ export default function ReportesPage() {
   const [showReportModal, setShowReportModal] = useState<{
     reportId: number;
   } | null>(null);
-  const [showCatalogueModal, setShowCatalogueModal] = useState(false);
-  const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -178,51 +174,9 @@ export default function ReportesPage() {
     []
   );
 
-  const OpenModalCatalog = useCallback(
-    async (reportId: number) => {
-      try {
-        if (!user?.token) return;
-
-        try {
-          const catalogue = await getCatalogueByReport(reportId, user.token);
-
-          if (catalogue?.catalogue_id) {
-            router.push(`/dashboard/catalogo/conceptos?report_id=${reportId}`);
-            return;
-          }
-        } catch (err: unknown) {
-          if (
-            err &&
-            typeof err === "object" &&
-            "response" in err &&
-            err.response &&
-            typeof err.response === "object" &&
-            "status" in err.response &&
-            err.response.status !== 404
-          ) {
-            console.error("Error verificando catálogo:", err);
-            return;
-          }
-        }
-
-        setSelectedReportId(reportId);
-        setShowCatalogueModal(true);
-      } catch (error) {
-        console.error("Error abriendo catálogo:", error);
-      }
-    },
-    [user?.token, router]
-  );
-
   const refreshReports = useCallback(() => {
     fetchReports(currentPage, currentStatus);
   }, [fetchReports, currentPage, currentStatus]);
-
-  const handleCatalogCreated = useCallback(() => {
-    if (!selectedReportId) return;
-    setShowCatalogueModal(false);
-    router.push(`/dashboard/catalogo/conceptos?report_id=${selectedReportId}`);
-  }, [router, selectedReportId]);
 
   const brandColor = "#611232";
 
@@ -302,7 +256,7 @@ export default function ReportesPage() {
                   </th>
                   <th
                     className="text-secondary fw-normal small bg-white"
-                    style={{ minWidth: "200px" }}
+                    style={{ minWidth: "120px" }}
                   >
                     Ubicación
                   </th>
@@ -358,13 +312,13 @@ export default function ReportesPage() {
                           />
                         </td>
                         <td className="text-end pe-3">
-                          <div className="d-flex justify-content-start align-items-center gap-3">
+                          <div className="d-flex justify-content-start align-items-center gap-2">
                             <button
                               onClick={() => OpenModalReport(report.report_id)}
                               className="btn btn-sm action-btnz d-flex align-items-center"
                               title="Ver reporte"
                             >
-                              <i className="bi bi-eye-fill fs-5"></i>
+                              <i className="bi bi-eye-fill fs-6"></i>
                             </button>
                             <button
                               onClick={() =>
@@ -376,14 +330,7 @@ export default function ReportesPage() {
                               className="btn btn-sm action-btnz d-flex align-items-center"
                               title="Ver ubicación"
                             >
-                              <i className="bi bi-geo-alt-fill fs-5"></i>
-                            </button>
-                            <button
-                              onClick={() => OpenModalCatalog(report.report_id)}
-                              className="btn btn-sm action-btnz d-flex align-items-center"
-                              title="Crear catálogo"
-                            >
-                              <i className="bi bi-file-earmark-text-fill fs-5"></i>
+                              <i className="bi bi-geo-alt-fill fs-6"></i>
                             </button>
                             <button
                               onClick={() =>
@@ -395,7 +342,7 @@ export default function ReportesPage() {
                               className="btn btn-sm action-btnz d-flex align-items-center"
                               title="Ver supervisor"
                             >
-                              <i className="bi bi-file-person-fill fs-5"></i>
+                              <i className="bi bi-file-person-fill fs-6"></i>
                             </button>
                           </div>
                         </td>
@@ -464,13 +411,6 @@ export default function ReportesPage() {
             latitude={showLocationReportModal.latitude}
             longitude={showLocationReportModal.longitude}
             onClose={() => setShowLocationReportModal(null)}
-          />
-        )}
-        {showCatalogueModal && selectedReportId && (
-          <CreateCatalogModal
-            reportId={selectedReportId}
-            onClose={() => setShowCatalogueModal(false)}
-            onCreated={handleCatalogCreated}
           />
         )}
       </div>

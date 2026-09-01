@@ -3,12 +3,8 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "leaflet.heat";
 import { ReportMapPoint } from "@/utils/types";
-
-// Importación dinámica segura de leaflet.heat en el navegador
-if (typeof window !== "undefined") {
-  require("leaflet.heat");
-}
 
 interface ReportsMapProps {
   points: ReportMapPoint[];
@@ -34,7 +30,7 @@ export default function ReportsMap({
 }: ReportsMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  const heatLayerRef = useRef<any>(null);
+  const heatLayerRef = useRef<L.Layer | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const pingMarkerRef = useRef<L.CircleMarker | null>(null);
 
@@ -123,30 +119,46 @@ export default function ReportsMap({
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    // 1. Limpiar capa previa de calor si existe
-    if (heatLayerRef.current) {
-      map.removeLayer(heatLayerRef.current);
-      heatLayerRef.current = null;
-    }
-
     // 2. Limpiar marcadores previos
     if (markersLayerRef.current) {
       markersLayerRef.current.clearLayers();
     }
 
-    if (filteredPoints.length === 0) return;
+    if (filteredPoints.length === 0) {
+      // Sin puntos: quitar la capa de calor si existe
+      if (heatLayerRef.current && map.hasLayer(heatLayerRef.current)) {
+        map.removeLayer(heatLayerRef.current);
+      }
+      heatLayerRef.current = null;
+      return;
+    }
+
+    const heatData: Array<[number, number, number]> = filteredPoints.map(
+      (p) => [p.latitude, p.longitude, 0.8]
+    );
 
     if (viewMode === "heatmap") {
-      // Formato para leaflet.heat: [lat, lng, intensity]
-      const heatData = filteredPoints.map((p) => [
-        p.latitude,
-        p.longitude,
-        0.8, // Intensidad base
-      ]);
+      // Reutilizar la capa de calor existente para evitar redibujados
+      // que disparan el error "_leaflet_pos is undefined".
+      const existingHeat = heatLayerRef.current as
+        | (L.Layer & { setLatLngs(latlngs: Array<[number, number, number]>): unknown })
+        | null;
 
-      if ((L as any).heatLayer) {
-        heatLayerRef.current = (L as any)
-          .heatLayer(heatData, {
+      if (existingHeat && map.hasLayer(existingHeat)) {
+        try {
+          existingHeat.setLatLngs(heatData);
+        } catch (err) {
+          console.warn("Error al actualizar el mapa de calor:", err);
+          try {
+            if (map.hasLayer(existingHeat)) map.removeLayer(existingHeat);
+          } catch {
+            /* noop */
+          }
+          heatLayerRef.current = null;
+        }
+      } else if (L.heatLayer) {
+        try {
+          heatLayerRef.current = L.heatLayer(heatData, {
             radius: 28,
             blur: 18,
             maxZoom: 17,
@@ -158,10 +170,18 @@ export default function ReportsMap({
               0.8: "#F97316", // Naranja
               1.0: "#EF4444", // Rojo intenso
             },
-          })
-          .addTo(map);
+          }).addTo(map);
+        } catch (err) {
+          console.warn("Error al dibujar el mapa de calor:", err);
+          heatLayerRef.current = null;
+        }
       }
     } else {
+      // Quitar la capa de calor al pasar a modo marcadores
+      if (heatLayerRef.current && map.hasLayer(heatLayerRef.current)) {
+        map.removeLayer(heatLayerRef.current);
+      }
+      heatLayerRef.current = null;
       // Modo Marcadores interactivos
       filteredPoints.forEach((point) => {
         const isBache =
@@ -256,16 +276,27 @@ export default function ReportsMap({
       });
     }
 
-    // Auto-ajuste de límites si hay puntos
+    // Auto-ajuste de límites si hay puntos (evita bounds degenerados/NaN)
     if (filteredPoints.length > 0) {
-      const bounds = L.latLngBounds(
-        filteredPoints.map((p) => [p.latitude, p.longitude])
+      const validCoords = filteredPoints.filter(
+        (p) =>
+          Number.isFinite(Number(p.latitude)) &&
+          Number.isFinite(Number(p.longitude))
       );
-      map.fitBounds(bounds, {
-        padding: [45, 45],
-        maxZoom: 15,
-        animate: true,
-      });
+      if (validCoords.length > 0) {
+        try {
+          const bounds = L.latLngBounds(
+            validCoords.map((p) => [Number(p.latitude), Number(p.longitude)])
+          );
+          map.fitBounds(bounds, {
+            padding: [45, 45],
+            maxZoom: 15,
+            animate: true,
+          });
+        } catch (err) {
+          console.warn("Error al ajustar los límites del mapa:", err);
+        }
+      }
     }
   }, [filteredPoints, viewMode]);
 
@@ -274,9 +305,10 @@ export default function ReportsMap({
     const map = mapInstanceRef.current;
     if (!map || !newReportPing?.latitude || !newReportPing?.longitude) return;
 
-    if (pingMarkerRef.current) {
+    if (pingMarkerRef.current && map.hasLayer(pingMarkerRef.current)) {
       map.removeLayer(pingMarkerRef.current);
     }
+    pingMarkerRef.current = null;
 
     const pingCircle = L.circleMarker(
       [newReportPing.latitude, newReportPing.longitude],
@@ -291,14 +323,26 @@ export default function ReportsMap({
 
     pingMarkerRef.current = pingCircle;
 
-    map.flyTo([newReportPing.latitude, newReportPing.longitude], 15, {
-      animate: true,
-      duration: 1.2,
-    });
+    // Enfocar el nuevo reporte solo si está fuera de la vista actual,
+    // evitando chocar con el redibujado de la capa de calor.
+    const lat = Number(newReportPing.latitude);
+    const lng = Number(newReportPing.longitude);
+    if (
+      Number.isFinite(lat) &&
+      Number.isFinite(lng) &&
+      !map.getBounds().contains([lat, lng])
+    ) {
+      map.setView([lat, lng], Math.max(map.getZoom(), 15), {
+        animate: true,
+        duration: 0.8,
+      });
+    }
 
     const timeout = setTimeout(() => {
       if (pingMarkerRef.current && map) {
-        map.removeLayer(pingMarkerRef.current);
+        if (map.hasLayer(pingMarkerRef.current)) {
+          map.removeLayer(pingMarkerRef.current);
+        }
         pingMarkerRef.current = null;
       }
     }, 6000);
@@ -314,11 +358,22 @@ export default function ReportsMap({
   };
 
   const handleRecenter = () => {
-    if (!mapInstanceRef.current || filteredPoints.length === 0) return;
-    const bounds = L.latLngBounds(
-      filteredPoints.map((p) => [p.latitude, p.longitude])
+    const map = mapInstanceRef.current;
+    if (!map || filteredPoints.length === 0) return;
+    const validCoords = filteredPoints.filter(
+      (p) =>
+        Number.isFinite(Number(p.latitude)) &&
+        Number.isFinite(Number(p.longitude))
     );
-    mapInstanceRef.current.fitBounds(bounds, { padding: [45, 45], maxZoom: 15 });
+    if (validCoords.length === 0) return;
+    try {
+      const bounds = L.latLngBounds(
+        validCoords.map((p) => [Number(p.latitude), Number(p.longitude)])
+      );
+      map.fitBounds(bounds, { padding: [45, 45], maxZoom: 15 });
+    } catch (err) {
+      console.warn("Error al re-centrar el mapa:", err);
+    }
   };
 
   return (

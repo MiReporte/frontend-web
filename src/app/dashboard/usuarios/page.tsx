@@ -12,7 +12,7 @@ import LoadingImage from "@/components/LoadingImage";
 
 export default function UsuariosPage() {
   return (
-    <ProtectedPage permission="conceptos">
+    <ProtectedPage permission="usuarios">
       <ProfileInner />
     </ProtectedPage>
   );
@@ -47,9 +47,9 @@ function ProfileInner() {
         ...(data.supervisors ?? []),
       ];
 
-      const activeStaff = combined.filter(
-        (item) => item.account_status === "ACTIVE"
-      );
+      const activeStaff = combined
+        .filter((item) => item.account_status === "ACTIVE")
+        .sort((a, b) => a.account_id - b.account_id);
 
       setStaff(activeStaff);
     } catch (err) {

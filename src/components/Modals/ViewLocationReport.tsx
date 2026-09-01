@@ -23,7 +23,7 @@ export function ViewLocationReport({
       tabIndex={-1}
       style={{ backgroundColor: "rgba(0,0,0,0.6)", zIndex: 1060 }}
     >
-      <div className="modal-dialog modal-lg modal-dialog-centered">
+      <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div className="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
           {/* HEADER */}
           <div
@@ -50,7 +50,9 @@ export function ViewLocationReport({
               <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
                 <div
                   style={{
-                    height: "400px",
+                    height: "40vh",
+                    minHeight: "260px",
+                    maxHeight: "400px",
                     width: "100%",
                   }}
                 >

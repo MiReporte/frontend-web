@@ -20,7 +20,7 @@ export function ConfirmUpdate({
       role="dialog"
       style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1060 }}
     >
-      <div className="modal-dialog modal-dialog-centered" role="document">
+      <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
         <div className="modal-content border-0 shadow-lg rounded-4">
           <div className="modal-header border-bottom-0 pb-0">
             <h5 className="modal-title fw-bold text-dark">

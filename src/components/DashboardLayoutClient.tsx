@@ -9,13 +9,10 @@ export default function DashboardLayoutClient({
   children: React.ReactNode;
 }) {
   return (
-    <div className="d-flex w-100" style={{ height: "100vh" }}>
+    <div className="d-flex w-100 app-viewport">
       <Sidebar />
 
-      <div
-        className="d-flex flex-column flex-grow-1 main-content"
-        style={{ height: "100vh" }}
-      >
+      <div className="d-flex flex-column flex-grow-1 main-content app-viewport">
         <Header />
 
         <main

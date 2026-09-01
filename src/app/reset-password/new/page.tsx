@@ -3,6 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { changePassword } from "@/services/changePassword";
+import Eye from "/public/icons/eye.svg";
+import EyeOff from "/public/icons/eye-off.svg";
+import Image from "next/image";
+import logo from "@/assets/MiReporte.png";
+import styles from "@/app/login/login.module.css";
+import resetStyles from "@/app/reset-password/reset.module.css";
 
 export default function NewPasswordPage() {
   const [password, setPassword] = useState("");
@@ -49,124 +55,158 @@ export default function NewPasswordPage() {
   };
 
   const getBorderColor = () => {
-    if (passwordsMatch) return "2px solid #28a745";
-    if (passwordsNotMatch) return "2px solid #dc3545";
-    return "1px solid #ced4da";
+    if (passwordsMatch) return "#28a745";
+    if (passwordsNotMatch) return "#dc3545";
+    return undefined;
   };
 
   return (
-    <div
-      className="container d-flex flex-column align-items-center justify-content-center w-100"
-      style={{ maxWidth: "500px", height: "100vh" }}
-    >
-      <span
-        className="border rounded-4 d-flex align-items-center justify-content-center mb-4"
-        style={{ width: "60px", height: "60px", borderWidth: "3px" }}
-      >
-        <i className="bi bi-key fs-2"></i>
-      </span>
+    <main className={styles.login}>
+      <section className={styles.brand}>
+        <Image
+          src={logo}
+          alt="MiReporte Logo"
+          className={styles.brandLogo}
+          loading="eager"
+          priority
+        />
 
-      <h1>Nueva contraseña</h1>
-      <p className="mb-5" style={{ color: "#706f6fff" }}>
-        Ingresa tu nueva contraseña para completar el proceso.
-      </p>
-
-      <form className="w-100" onSubmit={handleSubmit}>
-        <div className="mb-3 position-relative">
-          <label htmlFor="password" className="form-label">
-            Nueva contraseña
-          </label>
-
-          <input
-            type={showPass ? "text" : "password"}
-            className="form-control pe-5"
-            id="password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              setError("");
-            }}
-            placeholder="Ingresa tu nueva contraseña"
-            required
-            style={{
-              height: "45px",
-              border: getBorderColor(),
-            }}
-          />
-
-          <i
-            className={`bi ${
-              showPass ? "bi-eye-slash" : "bi-eye"
-            } position-absolute`}
-            style={{
-              top: "52%",
-              right: "15px",
-              cursor: "pointer",
-              color: "#666",
-              fontSize: "1.2rem",
-            }}
-            onClick={() => setShowPass(!showPass)}
-          ></i>
-        </div>
-
-        <div className="mb-3 position-relative">
-          <label htmlFor="confirm" className="form-label">
-            Confirmar contraseña
-          </label>
-
-          <input
-            type={showConfirm ? "text" : "password"}
-            className="form-control pe-5"
-            id="confirm"
-            value={confirm}
-            onChange={(e) => {
-              setConfirm(e.target.value);
-              setError("");
-            }}
-            placeholder="Confirma la contraseña"
-            required
-            style={{
-              height: "45px",
-              border: getBorderColor(),
-            }}
-          />
-
-          <i
-            className={`bi ${
-              showConfirm ? "bi-eye-slash" : "bi-eye"
-            } position-absolute`}
-            style={{
-              top: "52%",
-              right: "15px",
-              cursor: "pointer",
-              color: "#666",
-              fontSize: "1.2rem",
-            }}
-            onClick={() => setShowConfirm(!showConfirm)}
-          ></i>
-        </div>
-
-        {error && <p className="text-danger fw-semibold mb-3">{error}</p>}
-
-        {success && <p className="text-success fw-semibold mb-3">{success}</p>}
-
-        <button
-          type="submit"
-          className="btn btn-success w-100 fw-semibold"
-          style={{ height: "45px", backgroundColor: "#611232", color: "white" }}
+        <svg
+          className={styles.wave}
+          viewBox="0 0 1440 60"
+          preserveAspectRatio="none"
+          aria-hidden="true"
         >
-          Cambiar contraseña
-        </button>
-      </form>
+          <path
+            d="M0,30 C240,75 480,-15 720,20 C960,55 1200,0 1440,30 L1440,60 L0,60 Z"
+            fill="#f2f2f2"
+          />
+        </svg>
+      </section>
 
-      <a
-        className="d-flex align-items-center justify-content-center gap-2 mt-4 text-decoration-none"
-        style={{ cursor: "pointer", color: "#424242ff" }}
-        href="/login"
-      >
-        <i className="bi bi-arrow-left fs-5"></i>
-        <p className="m-0 fw-semibold">Ir a iniciar sesión</p>
-      </a>
-    </div>
+      <section className={styles.panel}>
+        <div className={styles.card}>
+          <form onSubmit={handleSubmit} className={styles.form} noValidate>
+            <span className={`${resetStyles.iconBadge} d-flex`}>
+              <i className="bi bi-key"></i>
+            </span>
+
+            <h1 className={styles.title}>Nueva contraseña</h1>
+            <p className={resetStyles.subtitle}>
+              Ingresa tu nueva contraseña para completar el proceso.
+            </p>
+
+            <label htmlFor="password" className={styles.label}>
+              Nueva contraseña
+            </label>
+            <div className={styles.passwordWrapper}>
+              <input
+                type={showPass ? "text" : "password"}
+                id="password"
+                className={styles.input}
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setError("");
+                }}
+                placeholder="Ingresa tu nueva contraseña"
+                required
+                style={{ borderColor: getBorderColor() }}
+              />
+
+              <span
+                className={styles.eyeIcon}
+                onClick={() => setShowPass(!showPass)}
+                role="button"
+                aria-label={
+                  showPass ? "Ocultar contraseña" : "Mostrar contraseña"
+                }
+              >
+                {showPass ? (
+                  <Image
+                    src={EyeOff}
+                    alt="Hide password"
+                    width={22}
+                    height={22}
+                  />
+                ) : (
+                  <Image
+                    src={Eye}
+                    alt="Show password"
+                    width={22}
+                    height={22}
+                  />
+                )}
+              </span>
+            </div>
+
+            <label htmlFor="confirm" className={styles.label}>
+              Confirmar contraseña
+            </label>
+            <div className={styles.passwordWrapper}>
+              <input
+                type={showConfirm ? "text" : "password"}
+                id="confirm"
+                className={styles.input}
+                value={confirm}
+                onChange={(e) => {
+                  setConfirm(e.target.value);
+                  setError("");
+                }}
+                placeholder="Confirma la contraseña"
+                required
+                style={{ borderColor: getBorderColor() }}
+              />
+
+              <span
+                className={styles.eyeIcon}
+                onClick={() => setShowConfirm(!showConfirm)}
+                role="button"
+                aria-label={
+                  showConfirm ? "Ocultar contraseña" : "Mostrar contraseña"
+                }
+              >
+                {showConfirm ? (
+                  <Image
+                    src={EyeOff}
+                    alt="Hide password"
+                    width={22}
+                    height={22}
+                  />
+                ) : (
+                  <Image
+                    src={Eye}
+                    alt="Show password"
+                    width={22}
+                    height={22}
+                  />
+                )}
+              </span>
+            </div>
+
+            {error && (
+              <p className={`text-danger fw-semibold ${resetStyles.feedback}`}>
+                {error}
+              </p>
+            )}
+
+            {success && (
+              <p className={`text-success fw-semibold ${resetStyles.feedback}`}>
+                {success}
+              </p>
+            )}
+
+            <button type="submit" className={styles.button}>
+              Cambiar contraseña
+            </button>
+          </form>
+
+          <a href="/login" className={`${resetStyles.back} text-decoration-none`}>
+            <i className="bi bi-arrow-left"></i>
+            <span>Ir a iniciar sesión</span>
+          </a>
+        </div>
+      </section>
+    </main>
   );
 }

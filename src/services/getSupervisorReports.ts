@@ -1,4 +1,5 @@
 import { ResponseReports } from "@/utils/types";
+import { getErrorMessage } from "@/utils/errorHandler";
 
 export const getSupervisorReports = async (
   token: string
@@ -15,12 +16,27 @@ export const getSupervisorReports = async (
       }
     );
     if (!response.ok) {
+      if (response.status === 404) {
+        return [];
+      }
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || "Failed to fetch supervisor reports");
+      throw new Error(
+        errorData.error ||
+          `Failed to fetch supervisor reports (HTTP ${response.status})`
+      );
     }
     const data = await response.json();
-    return data;
+    if (Array.isArray(data)) {
+      return data;
+    }
+    if (Array.isArray(data?.items)) {
+      return data.items;
+    }
+    if (Array.isArray(data?.reports)) {
+      return data.reports;
+    }
+    return data ?? [];
   } catch (error) {
-    throw new Error("An error occurred while fetching supervisor reports");
+    throw new Error(getErrorMessage(error));
   }
 };

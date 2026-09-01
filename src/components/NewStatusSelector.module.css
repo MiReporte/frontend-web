@@ -22,6 +22,12 @@
   background-color: #9333ea !important;
 }
 
+.stateSelect {
+  width: 100%;
+  min-width: 0;
+  max-width: 10rem;
+}
+
 .options {
   background-color: #ffffff !important;
   color: #000000 !important;
