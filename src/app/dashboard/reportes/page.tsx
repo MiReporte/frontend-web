@@ -8,7 +8,7 @@ import { NewStateSelector } from "@/components/NewStateSelector";
 import { UpdateSupervisorModal } from "@/components/Modals/UpdateSupervisorModal";
 import { ReportModal } from "@/components/Modals/ReportModal";
 import { ViewLocationReport } from "@/components/Modals/ViewLocationReport";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotifications } from "@/hooks/useNotifications";
 import { getSupervisorReports } from "@/services/getSupervisorReports";
@@ -17,7 +17,6 @@ import LoadingImage from "@/components/LoadingImage";
 
 export default function ReportesPage() {
   const { user } = useAuth();
-  const router = useRouter();
   const [reports, setReports] = useState<
     (ResponseReports & { address?: string })[]
   >([]);
@@ -43,9 +42,25 @@ export default function ReportesPage() {
   const searchParams = useSearchParams();
   const { lastReportEvent } = useNotifications();
   const lastProcessedEventIdRef = useRef<string | null>(null);
+  const openedParamReportIdRef = useRef<number | null>(null);
   const highlightedReportId = searchParams.get("report_id")
     ? Number(searchParams.get("report_id"))
     : null;
+
+  useEffect(() => {
+    const reportIdParam = searchParams.get("report_id");
+    if (reportIdParam) {
+      const parsedId = Number(reportIdParam);
+      if (
+        !isNaN(parsedId) &&
+        parsedId > 0 &&
+        openedParamReportIdRef.current !== parsedId
+      ) {
+        openedParamReportIdRef.current = parsedId;
+        setShowReportModal({ reportId: parsedId });
+      }
+    }
+  }, [searchParams]);
 
   const fetchReports = useCallback(
     async (page: number, status = "") => {
@@ -139,6 +154,15 @@ export default function ReportesPage() {
       fetchReports(currentPage, currentStatus);
     }
   }, [lastReportEvent, user?.role, currentStatus, currentPage, fetchReports]);
+
+  useEffect(() => {
+    if (highlightedReportId && reports.length > 0) {
+      const row = document.getElementById(`report-row-${highlightedReportId}`);
+      if (row) {
+        row.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [highlightedReportId, reports]);
 
   const handlePrevPage = useCallback(() => {
     if (currentPage > 1) setCurrentPage((p) => p - 1);
@@ -288,6 +312,7 @@ export default function ReportesPage() {
                   reports.map((report) => (
                       <tr
                         key={report.report_id}
+                        id={`report-row-${report.report_id}`}
                         className={
                           highlightedReportId === report.report_id
                             ? "table-warning border-start border-4 border-warning shadow-sm"

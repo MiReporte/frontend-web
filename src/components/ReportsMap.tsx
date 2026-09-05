@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet.heat";
@@ -28,6 +29,12 @@ export default function ReportsMap({
   selectedType = null,
   newReportPing = null,
 }: ReportsMapProps) {
+  const router = useRouter();
+  const routerRef = useRef(router);
+  useEffect(() => {
+    routerRef.current = router;
+  }, [router]);
+
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const heatLayerRef = useRef<L.Layer | null>(null);
@@ -103,6 +110,23 @@ export default function ReportsMap({
 
     // Capa de marcadores
     markersLayerRef.current = L.layerGroup().addTo(map);
+
+    map.on("popupopen", (e) => {
+      const popupNode = e.popup.getElement();
+      if (!popupNode) return;
+      const btn = popupNode.querySelector<HTMLAnchorElement>(
+        ".btn-view-report-detail"
+      );
+      if (btn) {
+        btn.onclick = (evt) => {
+          evt.preventDefault();
+          const repId = btn.getAttribute("data-report-id");
+          if (repId) {
+            routerRef.current.push(`/dashboard/reportes?report_id=${repId}`);
+          }
+        };
+      }
+    });
 
     mapInstanceRef.current = map;
 
@@ -242,7 +266,7 @@ export default function ReportsMap({
           : "Sin fecha";
 
         const popupContent = `
-          <div style="font-family: inherit; font-size: 0.88rem; min-width: 210px; line-height: 1.4;">
+          <div style="font-family: inherit; font-size: 0.88rem; min-width: 220px; line-height: 1.4;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; border-bottom: 1px solid #eee; padding-bottom: 4px;">
               <span style="font-weight: 700; color: #1f2937;">Reporte #${point.report_id}</span>
               <span style="background: ${isBache ? "#EEF2FF" : "#FEF3C7"}; color: ${isBache ? "#4338CA" : "#B45309"}; font-size: 0.72rem; padding: 2px 7px; border-radius: 9999px; font-weight: 600;">
@@ -257,11 +281,41 @@ export default function ReportsMap({
             <p style="margin: 0 0 4px 0; color: #6b7280; font-size: 0.8rem;">
               <i class="bi bi-geo-alt-fill text-danger me-1"></i> ${point.neighborhood || "Sin colonia"}
             </p>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; margin-bottom: 8px;">
               <span style="background-color: ${statusInfo.bg}; color: ${statusInfo.text}; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; font-weight: 500;">
                 ${statusInfo.label}
               </span>
               <span style="font-size: 0.75rem; color: #9ca3af;">${formattedDate}</span>
+            </div>
+            <div style="border-top: 1px solid #f3f4f6; padding-top: 8px; margin-top: 6px;">
+              <a
+                href="/dashboard/reportes?report_id=${point.report_id}"
+                data-report-id="${point.report_id}"
+                class="btn-view-report-detail"
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  gap: 6px;
+                  width: 100%;
+                  background-color: #611232;
+                  color: #ffffff;
+                  padding: 7px 12px;
+                  border-radius: 6px;
+                  font-size: 0.8rem;
+                  font-weight: 600;
+                  text-decoration: none;
+                  box-sizing: border-box;
+                  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+                  transition: background-color 0.2s ease, transform 0.1s ease;
+                  cursor: pointer;
+                "
+                onmouseover="this.style.backgroundColor='#4a0d26'"
+                onmouseout="this.style.backgroundColor='#611232'"
+              >
+                <i class="bi bi-box-arrow-up-right" style="font-size: 0.75rem;"></i>
+                Ver detalle del reporte
+              </a>
             </div>
           </div>
         `;
@@ -276,7 +330,6 @@ export default function ReportsMap({
       });
     }
 
-    // Auto-ajuste de límites si hay puntos (evita bounds degenerados/NaN)
     if (filteredPoints.length > 0) {
       const validCoords = filteredPoints.filter(
         (p) =>

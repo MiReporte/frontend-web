@@ -47,6 +47,15 @@ const PERMISSION_REQUIRED: Record<string, string[]> = {
   "Mesa de servicios": ["REVISION", "APROBADO", "NO_APROBADO", "CIERRE"],
 };
 
+const ALLOWED_TRANSITIONS_UI: Record<string, string[]> = {
+  "En revisión": ["Aprobado", "No aprobado"],
+  Aprobado: ["En proceso"],
+  "En proceso": ["Completado"],
+  Completado: ["Cerrado"],
+  "No aprobado": [],
+  Cerrado: [],
+};
+
 interface Props {
   reportId: number;
   currentStatus: string;
@@ -70,8 +79,17 @@ export function NewStateSelector({
     setStatus(API_TO_UI[currentStatus] || currentStatus);
   }, [currentStatus]);
 
+  const isTerminal = status === "No aprobado" || status === "Cerrado";
+
   const handleChange = (newStatusUI: string) => {
     if (!user) return;
+
+    if (isTerminal) {
+      setAlertMessage(
+        `El reporte está en estado final "${status}" y no puede ser modificado.`
+      );
+      return;
+    }
 
     const allowed = PERMISSION_REQUIRED[user.role];
     if (!allowed) {
@@ -81,6 +99,16 @@ export function NewStateSelector({
 
     if (!allowed.includes(STATUS_API[newStatusUI])) {
       setAlertMessage("No tienes permiso para cambiar a este estado.");
+      return;
+    }
+
+    const allowedNext = ALLOWED_TRANSITIONS_UI[status] || [];
+    if (!allowedNext.includes(newStatusUI)) {
+      setAlertMessage(
+        allowedNext.length > 0
+          ? `Desde "${status}" solo es posible cambiar a: ${allowedNext.join(", ")}.`
+          : `El reporte está en estado final "${status}".`
+      );
       return;
     }
 
@@ -97,7 +125,11 @@ export function NewStateSelector({
       onUpdated?.(pendingStatus);
     } catch (err) {
       console.error("Error al actualizar estado:", err);
-      setAlertMessage("Error al actualizar el estado. Intenta de nuevo.");
+      const msg =
+        err instanceof Error && err.message
+          ? err.message
+          : "Error al actualizar el estado. Intenta de nuevo.";
+      setAlertMessage(msg);
     } finally {
       setLoading(false);
       setPendingStatus(null);
@@ -119,14 +151,21 @@ export function NewStateSelector({
         <div className="selectWrapper">
           <select
             value={status}
-            disabled={loading}
+            disabled={loading || isTerminal}
             onChange={(e) => handleChange(e.target.value)}
             className={`form-select fw-bold rounded-pill px-3 py-1 text-white noArrow ${selectClass} ${styles.stateSelect}`}
+            title={isTerminal ? `Estado final: ${status}` : undefined}
           >
             {UI_STATUS.map((label) => {
               const apiCode = STATUS_API[label];
-              const allowed = user ? PERMISSION_REQUIRED[user.role] : undefined;
-              const isDisabled = allowed ? !allowed.includes(apiCode) : true;
+              const roleAllowed = user
+                ? PERMISSION_REQUIRED[user.role]?.includes(apiCode)
+                : false;
+              const isCurrent = label === status;
+              const transitionAllowed = (
+                ALLOWED_TRANSITIONS_UI[status] || []
+              ).includes(label);
+              const isDisabled = !roleAllowed || (!isCurrent && !transitionAllowed);
               return (
                 <option key={label} value={label} disabled={isDisabled}>
                   {label}
