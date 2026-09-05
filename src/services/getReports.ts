@@ -2,20 +2,23 @@ import { PaginatedResponse } from "@/utils/types";
 import { getErrorMessage } from "@/utils/errorHandler";
 
 /**
- * Fetches reports from the API with pagination and optional status filtering.
+ * Fetches reports from the API with pagination and optional status and user filtering.
  * @param page page number
  * @param limit limit of reports per page
  * @param status status filter for reports
+ * @param userId optional citizen account_id filter
  * @returns PaginatedResponse containing reports data
  */
 export const getReports = async (
   page = 1,
   limit = 10,
-  status = ""
+  status = "",
+  userId?: number | null
 ): Promise<PaginatedResponse> => {
   try {
+    const userQuery = userId ? `&user_id=${userId}` : "";
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/reports/?page=${page}&limit=${limit}&status=${status}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/reports/?page=${page}&limit=${limit}&status=${status}${userQuery}`,
       {
         method: "GET",
         headers: {
@@ -31,7 +34,7 @@ export const getReports = async (
           items: [],
           limit,
           page,
-          totalItems: 1,
+          totalItems: 0,
           totalPages: 1,
         };
       }

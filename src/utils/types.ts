@@ -297,6 +297,7 @@ export interface NewReportSocketPayload {
     date: string;
     latitude: number;
     longitude: number;
+    reporting_user?: number;
   };
 }
 

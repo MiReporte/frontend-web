@@ -2,24 +2,18 @@
 
 import { useAuth } from "@/hooks/useAuth";
 import { getCiudadanos } from "@/services/getCiudadanos";
-import { getUserReports } from "@/services/getUserReports";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import ProtectedPage from "@/components/ProtectedPage";
 import LoadingImage from "@/components/LoadingImage";
-import UserReportsModal from "@/components/Modals/UserReportModal";
-import { CiudadanosResponse, UserReportsResponse } from "@/utils/types";
+import { CiudadanoItem, CiudadanosResponse } from "@/utils/types";
 
 export default function CiudadanosPage() {
+  const router = useRouter();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<CiudadanosResponse | null>(null);
-
-  // Modal states
-  const [showModal, setShowModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<number | null>(null);
-  const [loadingReports, setLoadingReports] = useState(false);
-  const [reports, setReports] = useState<UserReportsResponse | null>(null);
 
   // Fetch ciudadanos
   useEffect(() => {
@@ -46,25 +40,11 @@ export default function CiudadanosPage() {
     fetchCiudadanos();
   }, [user?.token]);
 
-  const openReportsModal = async (userId: number) => {
-    setSelectedUser(userId);
-    setShowModal(true);
-    setLoadingReports(true);
-
-    try {
-      const result = await getUserReports(user!.token, userId);
-      setReports(result);
-    } catch {
-      setReports(null);
-    }
-
-    setLoadingReports(false);
-  };
-
-  const closeModal = () => {
-    setShowModal(false);
-    setSelectedUser(null);
-    setReports(null);
+  const handleViewReports = (citizen: CiudadanoItem) => {
+    const fullName = `${citizen.name} ${citizen.first_surname}`.trim();
+    router.push(
+      `/dashboard/reportes?user_id=${citizen.account_id}&user_name=${encodeURIComponent(fullName)}`
+    );
   };
 
   return (
@@ -98,10 +78,12 @@ export default function CiudadanosPage() {
 
                       <td>
                         <button
-                          className="btn btn-primary btn-sm"
-                          onClick={() => openReportsModal(c.account_id)}
+                          className="btn btn-primary btn-sm d-inline-flex align-items-center gap-1 shadow-sm"
+                          onClick={() => handleViewReports(c)}
+                          title={`Ver reportes de ${c.name} ${c.first_surname}`}
                         >
-                          Ver reportes
+                          <i className="bi bi-file-earmark-text"></i>
+                          <span>Ver reportes</span>
                         </button>
                       </td>
                     </tr>
@@ -112,13 +94,6 @@ export default function CiudadanosPage() {
           )}
         </div>
       </div>
-
-      <UserReportsModal
-        show={showModal}
-        loading={loadingReports}
-        reports={reports}
-        onClose={closeModal}
-      />
     </ProtectedPage>
   );
 }

@@ -8,7 +8,7 @@ import { NewStateSelector } from "@/components/NewStateSelector";
 import { UpdateSupervisorModal } from "@/components/Modals/UpdateSupervisorModal";
 import { ReportModal } from "@/components/Modals/ReportModal";
 import { ViewLocationReport } from "@/components/Modals/ViewLocationReport";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotifications } from "@/hooks/useNotifications";
 import { getSupervisorReports } from "@/services/getSupervisorReports";
@@ -16,6 +16,7 @@ import ProtectedPage from "@/components/ProtectedPage";
 import LoadingImage from "@/components/LoadingImage";
 
 export default function ReportesPage() {
+  const router = useRouter();
   const { user } = useAuth();
   const [reports, setReports] = useState<
     (ResponseReports & { address?: string })[]
@@ -47,6 +48,19 @@ export default function ReportesPage() {
     ? Number(searchParams.get("report_id"))
     : null;
 
+  const userIdParam = searchParams.get("user_id");
+  const userNameParam = searchParams.get("user_name");
+  const filteredUserId =
+    userIdParam && !isNaN(Number(userIdParam)) ? Number(userIdParam) : null;
+
+  const prevUserIdRef = useRef<number | null>(filteredUserId);
+  useEffect(() => {
+    if (prevUserIdRef.current !== filteredUserId) {
+      prevUserIdRef.current = filteredUserId;
+      setCurrentPage(1);
+    }
+  }, [filteredUserId]);
+
   useEffect(() => {
     const reportIdParam = searchParams.get("report_id");
     if (reportIdParam) {
@@ -63,7 +77,7 @@ export default function ReportesPage() {
   }, [searchParams]);
 
   const fetchReports = useCallback(
-    async (page: number, status = "") => {
+    async (page: number, status = "", userId: number | null = null) => {
       try {
         setLoading(true);
         setError(null);
@@ -83,7 +97,7 @@ export default function ReportesPage() {
             totalPages: 1,
           };
         } else {
-          paginatedData = await getReports(page, limit, status);
+          paginatedData = await getReports(page, limit, status, userId);
         }
 
         const items = paginatedData.items ?? [];
@@ -135,8 +149,8 @@ export default function ReportesPage() {
   );
 
   useEffect(() => {
-    fetchReports(currentPage, currentStatus);
-  }, [currentPage, currentStatus, fetchReports]);
+    fetchReports(currentPage, currentStatus, filteredUserId);
+  }, [currentPage, currentStatus, filteredUserId, fetchReports]);
 
   // Actualizar tabla en tiempo real cuando llega un nuevo reporte vía Socket.IO
   useEffect(() => {
@@ -151,9 +165,22 @@ export default function ReportesPage() {
       userRole === "administrador" || userRole === "mesa de servicios";
 
     if (isAllowed && (currentStatus === "" || currentStatus === "REVISION")) {
-      fetchReports(currentPage, currentStatus);
+      if (
+        filteredUserId &&
+        lastReportEvent.report.reporting_user !== filteredUserId
+      ) {
+        return;
+      }
+      fetchReports(currentPage, currentStatus, filteredUserId);
     }
-  }, [lastReportEvent, user?.role, currentStatus, currentPage, fetchReports]);
+  }, [
+    lastReportEvent,
+    user?.role,
+    currentStatus,
+    currentPage,
+    filteredUserId,
+    fetchReports,
+  ]);
 
   useEffect(() => {
     if (highlightedReportId && reports.length > 0) {
@@ -180,6 +207,10 @@ export default function ReportesPage() {
     []
   );
 
+  const handleClearUserFilter = useCallback(() => {
+    router.push("/dashboard/reportes");
+  }, [router]);
+
   const OpenModalSupervisor = useCallback(
     (reportId: number, supervisorId: number | null) => {
       setShowUpdateSupervisorModal({ reportId, supervisorId });
@@ -199,8 +230,8 @@ export default function ReportesPage() {
   );
 
   const refreshReports = useCallback(() => {
-    fetchReports(currentPage, currentStatus);
-  }, [fetchReports, currentPage, currentStatus]);
+    fetchReports(currentPage, currentStatus, filteredUserId);
+  }, [fetchReports, currentPage, currentStatus, filteredUserId]);
 
   const brandColor = "#611232";
 
@@ -240,6 +271,40 @@ export default function ReportesPage() {
           <div className="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center mb-4 gap-3">
             <h4 className="fw-bold m-0 text-dark">Listado de reportes</h4>
           </div>
+
+          {filteredUserId && (
+            <div className="alert alert-primary d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4 border-0 shadow-sm rounded-3 py-3 px-4">
+              <div className="d-flex align-items-center gap-3">
+                <div
+                  className="rounded-circle d-flex align-items-center justify-content-center text-white flex-shrink-0"
+                  style={{ width: "42px", height: "42px", backgroundColor: "#611232" }}
+                >
+                  <i className="bi bi-person-fill fs-5"></i>
+                </div>
+                <div>
+                  <span
+                    className="small text-secondary fw-semibold d-block text-uppercase"
+                    style={{ letterSpacing: "0.5px" }}
+                  >
+                    Filtro activo por ciudadano
+                  </span>
+                  <span className="fw-bold text-dark fs-6">
+                    {userNameParam
+                      ? `${userNameParam} (ID: ${filteredUserId})`
+                      : `Ciudadano ID: ${filteredUserId}`}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={handleClearUserFilter}
+                className="btn btn-outline-danger btn-sm rounded-pill d-flex align-items-center gap-2 px-3 py-1 shadow-sm bg-white"
+                title="Quitar filtro y ver todos los reportes"
+              >
+                <i className="bi bi-x-circle-fill"></i>
+                <span>Ver todos los reportes</span>
+              </button>
+            </div>
+          )}
 
           <div className="d-flex flex-wrap gap-2 mb-4 border-bottom pb-3">
             {filters.map((filter) => {
@@ -376,7 +441,9 @@ export default function ReportesPage() {
                 ) : (
                   <tr>
                     <td colSpan={6} className="text-center py-5 text-muted">
-                      No hay reportes disponibles
+                      {filteredUserId
+                        ? `No hay reportes registrados para ${userNameParam || `el ciudadano #${filteredUserId}`}`
+                        : "No hay reportes disponibles"}
                     </td>
                   </tr>
                 )}
