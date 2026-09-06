@@ -47,6 +47,7 @@ export interface ResponseReports {
   status: string;
   latitude: number;
   longitude: number;
+  neighborhood?: string | null;
   description: string;
   evidence: string;
   evidence1?: string;
@@ -56,6 +57,7 @@ export interface ResponseReports {
   assigned_supervisor: number | null;
   reporting_user: number | null;
   typereport: string;
+  asunto?: string | null;
 }
 
 export interface PaginatedResponse {

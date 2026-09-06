@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -22,6 +22,83 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }>
   CIERRE: { bg: "#9333EA", text: "#fff", label: "Cerrado" },
   NO_APROBADO: { bg: "#DC2626", text: "#fff", label: "No Aprobado" },
 };
+
+interface ClusterGroup {
+  id: string;
+  latitude: number;
+  longitude: number;
+  points: ReportMapPoint[];
+}
+
+/**
+ * Agrupa puntos geográficos cercanos en clusters según la escala de zoom y proyección del mapa.
+ */
+function clusterPoints(
+  points: ReportMapPoint[],
+  map: L.Map,
+  radiusPx = 42
+): ClusterGroup[] {
+  const clusters: ClusterGroup[] = [];
+
+  for (const point of points) {
+    const lat = Number(point.latitude);
+    const lng = Number(point.longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+
+    const ptLayer = map.latLngToLayerPoint([lat, lng]);
+
+    let matchedCluster: ClusterGroup | null = null;
+    let minDistance = Infinity;
+
+    for (const cluster of clusters) {
+      const clusterPtLayer = map.latLngToLayerPoint([
+        cluster.latitude,
+        cluster.longitude,
+      ]);
+      const pixelDist = Math.hypot(
+        ptLayer.x - clusterPtLayer.x,
+        ptLayer.y - clusterPtLayer.y
+      );
+      const geoDist = map.distance(
+        [lat, lng],
+        [cluster.latitude, cluster.longitude]
+      );
+
+      // Agrupar si están a menos de radiusPx píxeles en pantalla o a menos de 25 metros de distancia real
+      if (pixelDist <= radiusPx || geoDist <= 25) {
+        if (pixelDist < minDistance) {
+          minDistance = pixelDist;
+          matchedCluster = cluster;
+        }
+      }
+    }
+
+    if (matchedCluster) {
+      matchedCluster.points.push(point);
+      // Recalcular centroide del grupo para un posicionamiento armónico
+      const count = matchedCluster.points.length;
+      const sumLat = matchedCluster.points.reduce(
+        (acc, p) => acc + Number(p.latitude),
+        0
+      );
+      const sumLng = matchedCluster.points.reduce(
+        (acc, p) => acc + Number(p.longitude),
+        0
+      );
+      matchedCluster.latitude = sumLat / count;
+      matchedCluster.longitude = sumLng / count;
+    } else {
+      clusters.push({
+        id: `cluster-${point.report_id}-${lat}-${lng}`,
+        latitude: lat,
+        longitude: lng,
+        points: [point],
+      });
+    }
+  }
+
+  return clusters;
+}
 
 export default function ReportsMap({
   points,
@@ -111,13 +188,14 @@ export default function ReportsMap({
     // Capa de marcadores
     markersLayerRef.current = L.layerGroup().addTo(map);
 
+    // Listener global para navegación al hacer clic en botones dentro de cualquier popup
     map.on("popupopen", (e) => {
       const popupNode = e.popup.getElement();
       if (!popupNode) return;
-      const btn = popupNode.querySelector<HTMLAnchorElement>(
+      const btns = popupNode.querySelectorAll<HTMLAnchorElement>(
         ".btn-view-report-detail"
       );
-      if (btn) {
+      btns.forEach((btn) => {
         btn.onclick = (evt) => {
           evt.preventDefault();
           const repId = btn.getAttribute("data-report-id");
@@ -125,7 +203,7 @@ export default function ReportsMap({
             routerRef.current.push(`/dashboard/reportes?report_id=${repId}`);
           }
         };
-      }
+      });
     });
 
     mapInstanceRef.current = map;
@@ -138,76 +216,21 @@ export default function ReportsMap({
     };
   }, []);
 
-  // Actualizar capas según filteredPoints y viewMode
-  useEffect(() => {
+  // Función para renderizar marcadores y clusters
+  const renderMarkersAndClusters = useCallback(() => {
     const map = mapInstanceRef.current;
-    if (!map) return;
+    if (!map || !markersLayerRef.current) return;
 
-    // 2. Limpiar marcadores previos
-    if (markersLayerRef.current) {
-      markersLayerRef.current.clearLayers();
-    }
+    markersLayerRef.current.clearLayers();
 
-    if (filteredPoints.length === 0) {
-      // Sin puntos: quitar la capa de calor si existe
-      if (heatLayerRef.current && map.hasLayer(heatLayerRef.current)) {
-        map.removeLayer(heatLayerRef.current);
-      }
-      heatLayerRef.current = null;
-      return;
-    }
+    if (filteredPoints.length === 0) return;
 
-    const heatData: Array<[number, number, number]> = filteredPoints.map(
-      (p) => [p.latitude, p.longitude, 0.8]
-    );
+    const clusters = clusterPoints(filteredPoints, map);
 
-    if (viewMode === "heatmap") {
-      // Reutilizar la capa de calor existente para evitar redibujados
-      // que disparan el error "_leaflet_pos is undefined".
-      const existingHeat = heatLayerRef.current as
-        | (L.Layer & { setLatLngs(latlngs: Array<[number, number, number]>): unknown })
-        | null;
-
-      if (existingHeat && map.hasLayer(existingHeat)) {
-        try {
-          existingHeat.setLatLngs(heatData);
-        } catch (err) {
-          console.warn("Error al actualizar el mapa de calor:", err);
-          try {
-            if (map.hasLayer(existingHeat)) map.removeLayer(existingHeat);
-          } catch {
-            /* noop */
-          }
-          heatLayerRef.current = null;
-        }
-      } else if (L.heatLayer) {
-        try {
-          heatLayerRef.current = L.heatLayer(heatData, {
-            radius: 28,
-            blur: 18,
-            maxZoom: 17,
-            max: 1.0,
-            gradient: {
-              0.2: "#3B82F6", // Azul
-              0.4: "#10B981", // Verde
-              0.6: "#FBBF24", // Amarillo
-              0.8: "#F97316", // Naranja
-              1.0: "#EF4444", // Rojo intenso
-            },
-          }).addTo(map);
-        } catch (err) {
-          console.warn("Error al dibujar el mapa de calor:", err);
-          heatLayerRef.current = null;
-        }
-      }
-    } else {
-      // Quitar la capa de calor al pasar a modo marcadores
-      if (heatLayerRef.current && map.hasLayer(heatLayerRef.current)) {
-        map.removeLayer(heatLayerRef.current);
-      }
-      heatLayerRef.current = null;
-      // Modo Marcadores interactivos
-      filteredPoints.forEach((point) => {
+    clusters.forEach((cluster) => {
+      if (cluster.points.length === 1) {
+        // --- MARCADOR INDIVIDUAL (1 solo reporte) ---
+        const point = cluster.points[0];
         const isBache =
           point.typereport?.toUpperCase() === "BACHE" ||
           point.typereport?.toUpperCase() === "BACHEO";
@@ -220,7 +243,7 @@ export default function ReportsMap({
           };
 
         const iconHtml = `
-          <div style="
+          <div class="custom-report-pin" style="
             position: relative;
             width: 32px;
             height: 32px;
@@ -234,7 +257,6 @@ export default function ReportsMap({
             border: 2px solid #ffffff;
             font-size: 14px;
             cursor: pointer;
-            transition: transform 0.2s ease;
           ">
             <i class="bi ${isBache ? "bi-water" : "bi-lightbulb-fill"}"></i>
             <span style="
@@ -252,7 +274,7 @@ export default function ReportsMap({
 
         const customDivIcon = L.divIcon({
           html: iconHtml,
-          className: "custom-report-pin",
+          className: "custom-report-pin-wrapper",
           iconSize: [32, 32],
           iconAnchor: [16, 16],
           popupAnchor: [0, -18],
@@ -307,7 +329,7 @@ export default function ReportsMap({
                   text-decoration: none;
                   box-sizing: border-box;
                   box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-                  transition: background-color 0.2s ease, transform 0.1s ease;
+                  transition: background-color 0.2s ease;
                   cursor: pointer;
                 "
                 onmouseover="this.style.backgroundColor='#4a0d26'"
@@ -324,10 +346,264 @@ export default function ReportsMap({
           icon: customDivIcon,
         }).bindPopup(popupContent);
 
-        if (markersLayerRef.current) {
-          markersLayerRef.current.addLayer(marker);
+        markersLayerRef.current?.addLayer(marker);
+      } else {
+        // --- MARCADOR DE GRUPO / CLUSTER (>= 2 reportes agrupados) ---
+        const bacheCount = cluster.points.filter((p) => {
+          const t = (p.typereport || "").toUpperCase();
+          return t.includes("BACH");
+        }).length;
+        const alumCount = cluster.points.length - bacheCount;
+        const totalCount = cluster.points.length;
+        const displayCount = totalCount > 99 ? "99+" : `${totalCount}`;
+        const isMixed = bacheCount > 0 && alumCount > 0;
+
+        const clusterHtml = `
+          <div class="custom-cluster-pin" style="
+            position: relative;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: ${
+              isMixed
+                ? "linear-gradient(135deg, #611232 0%, #4338CA 50%, #D97706 100%)"
+                : bacheCount > 0
+                ? "linear-gradient(135deg, #611232 0%, #4338CA 100%)"
+                : "linear-gradient(135deg, #611232 0%, #D97706 100%)"
+            };
+            border: 2.5px solid #ffffff;
+            box-shadow: 0 4px 14px rgba(97, 18, 50, 0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            user-select: none;
+          ">
+            <span>${displayCount}</span>
+            <span style="
+              position: absolute;
+              top: -4px;
+              right: -4px;
+              width: 15px;
+              height: 15px;
+              background-color: #ffffff;
+              color: #611232;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 9px;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+            ">
+              <i class="bi bi-stack"></i>
+            </span>
+          </div>
+        `;
+
+        const clusterDivIcon = L.divIcon({
+          html: clusterHtml,
+          className: "custom-cluster-pin-wrapper",
+          iconSize: [38, 38],
+          iconAnchor: [19, 19],
+          popupAnchor: [0, -20],
+        });
+
+        // Popup interactivo para seleccionar entre los reportes agrupados
+        const clusterPopupContent = `
+          <div style="font-family: inherit; font-size: 0.88rem; width: 300px; max-width: 90vw; line-height: 1.4;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px;">
+              <div style="font-weight: 700; color: #111827; font-size: 0.92rem; display: flex; align-items: center; gap: 6px;">
+                <i class="bi bi-layers-fill" style="color: #611232;"></i>
+                <span>${totalCount} Reportes en esta ubicación</span>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap;">
+              ${
+                bacheCount > 0
+                  ? `<span style="background: #EEF2FF; color: #4338CA; font-size: 0.7rem; padding: 2px 7px; border-radius: 9999px; font-weight: 600;"><i class="bi bi-water me-1"></i>${bacheCount} ${bacheCount === 1 ? "Bache" : "Baches"}</span>`
+                  : ""
+              }
+              ${
+                alumCount > 0
+                  ? `<span style="background: #FEF3C7; color: #B45309; font-size: 0.7rem; padding: 2px 7px; border-radius: 9999px; font-weight: 600;"><i class="bi bi-lightbulb-fill me-1"></i>${alumCount} ${alumCount === 1 ? "Alumbrado" : "Alumbrados"}</span>`
+                  : ""
+              }
+            </div>
+
+            <p style="margin: 0 0 8px 0; font-size: 0.75rem; color: #6b7280; font-weight: 500;">
+              Selecciona el reporte que deseas consultar:
+            </p>
+
+            <div class="cluster-popup-scroll" style="max-height: 230px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 3px;">
+              ${cluster.points
+                .map((p) => {
+                  const pIsBache =
+                    p.typereport?.toUpperCase() === "BACHE" ||
+                    p.typereport?.toUpperCase() === "BACHEO";
+                  const pStatusInfo =
+                    STATUS_COLORS[p.status?.toUpperCase()] || {
+                      bg: "#6B7280",
+                      text: "#fff",
+                      label: p.status || "Desconocido",
+                    };
+                  const pFormattedDate = p.date
+                    ? new Date(p.date).toLocaleString("es-MX", {
+                        dateStyle: "short",
+                        timeStyle: "short",
+                      })
+                    : "Sin fecha";
+
+                  return `
+                    <div class="cluster-report-card" style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px 10px;">
+                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span style="font-weight: 700; color: #111827; font-size: 0.82rem;">Reporte #${p.report_id}</span>
+                        <span style="background: ${pIsBache ? "#EEF2FF" : "#FEF3C7"}; color: ${pIsBache ? "#4338CA" : "#B45309"}; font-size: 0.68rem; padding: 1px 6px; border-radius: 9999px; font-weight: 600;">
+                          <i class="bi ${pIsBache ? "bi-water" : "bi-lightbulb-fill"} me-1"></i>${pIsBache ? "Bache" : "Alumbrado"}
+                        </span>
+                      </div>
+                      ${
+                        p.problem
+                          ? `<p style="margin: 0 0 3px 0; font-weight: 600; font-size: 0.78rem; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.problem}</p>`
+                          : ""
+                      }
+                      <p style="margin: 0 0 5px 0; color: #6b7280; font-size: 0.74rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        <i class="bi bi-geo-alt-fill text-danger me-1"></i> ${p.neighborhood || "Sin colonia"} &bull; <span style="color: #9ca3af;">${pFormattedDate}</span>
+                      </p>
+                      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #e5e7eb; padding-top: 5px; margin-top: 3px;">
+                        <span style="background-color: ${pStatusInfo.bg}; color: ${pStatusInfo.text}; font-size: 0.68rem; padding: 1px 6px; border-radius: 4px; font-weight: 500;">
+                          ${pStatusInfo.label}
+                        </span>
+                        <a
+                          href="/dashboard/reportes?report_id=${p.report_id}"
+                          data-report-id="${p.report_id}"
+                          class="btn-view-report-detail"
+                          style="
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 4px;
+                            background-color: #611232;
+                            color: #ffffff;
+                            padding: 3px 9px;
+                            border-radius: 5px;
+                            font-size: 0.72rem;
+                            font-weight: 600;
+                            text-decoration: none;
+                            cursor: pointer;
+                            transition: background-color 0.15s ease;
+                          "
+                          onmouseover="this.style.backgroundColor='#4a0d26'"
+                          onmouseout="this.style.backgroundColor='#611232'"
+                        >
+                          Ver detalle <i class="bi bi-box-arrow-up-right" style="font-size: 0.68rem;"></i>
+                        </a>
+                      </div>
+                    </div>
+                  `;
+                })
+                .join("")}
+            </div>
+          </div>
+        `;
+
+        const clusterMarker = L.marker([cluster.latitude, cluster.longitude], {
+          icon: clusterDivIcon,
+        }).bindPopup(clusterPopupContent);
+
+        markersLayerRef.current?.addLayer(clusterMarker);
+      }
+    });
+  }, [filteredPoints]);
+
+  // Actualizar capas según filteredPoints y viewMode
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (filteredPoints.length === 0) {
+      // Sin puntos: limpiar marcadores y quitar la capa de calor si existe
+      if (markersLayerRef.current) {
+        markersLayerRef.current.clearLayers();
+      }
+      if (heatLayerRef.current && map.hasLayer(heatLayerRef.current)) {
+        map.removeLayer(heatLayerRef.current);
+      }
+      heatLayerRef.current = null;
+      return;
+    }
+
+    const heatData: Array<[number, number, number]> = filteredPoints.map(
+      (p) => [p.latitude, p.longitude, 0.8]
+    );
+
+    if (viewMode === "heatmap") {
+      // Limpiar marcadores
+      if (markersLayerRef.current) {
+        markersLayerRef.current.clearLayers();
+      }
+
+      // Reutilizar la capa de calor existente para evitar redibujados
+      const existingHeat = heatLayerRef.current as
+        | (L.Layer & { setLatLngs(latlngs: Array<[number, number, number]>): unknown })
+        | null;
+
+      if (existingHeat && map.hasLayer(existingHeat)) {
+        try {
+          existingHeat.setLatLngs(heatData);
+        } catch (err) {
+          console.warn("Error al actualizar el mapa de calor:", err);
+          try {
+            if (map.hasLayer(existingHeat)) map.removeLayer(existingHeat);
+          } catch {
+            /* noop */
+          }
+          heatLayerRef.current = null;
         }
-      });
+      } else if (L.heatLayer) {
+        try {
+          heatLayerRef.current = L.heatLayer(heatData, {
+            radius: 28,
+            blur: 18,
+            maxZoom: 17,
+            max: 1.0,
+            gradient: {
+              0.2: "#3B82F6", // Azul
+              0.4: "#10B981", // Verde
+              0.6: "#FBBF24", // Amarillo
+              0.8: "#F97316", // Naranja
+              1.0: "#EF4444", // Rojo intenso
+            },
+          }).addTo(map);
+        } catch (err) {
+          console.warn("Error al dibujar el mapa de calor:", err);
+          heatLayerRef.current = null;
+        }
+      }
+    } else {
+      // Quitar la capa de calor al pasar a modo marcadores
+      if (heatLayerRef.current && map.hasLayer(heatLayerRef.current)) {
+        map.removeLayer(heatLayerRef.current);
+      }
+      heatLayerRef.current = null;
+
+      // Renderizar marcadores y clusters
+      renderMarkersAndClusters();
+
+      // Escuchar eventos de zoom y movimiento para recalcular clusters dinámicamente
+      const onMapChange = () => {
+        renderMarkersAndClusters();
+      };
+
+      map.on("zoomend", onMapChange);
+      map.on("moveend", onMapChange);
+
+      return () => {
+        map.off("zoomend", onMapChange);
+        map.off("moveend", onMapChange);
+      };
     }
 
     if (filteredPoints.length > 0) {
@@ -351,7 +627,7 @@ export default function ReportsMap({
         }
       }
     }
-  }, [filteredPoints, viewMode]);
+  }, [filteredPoints, viewMode, renderMarkersAndClusters]);
 
   // Manejo de pulso en vivo para nuevos reportes vía WebSocket
   useEffect(() => {
@@ -376,8 +652,7 @@ export default function ReportsMap({
 
     pingMarkerRef.current = pingCircle;
 
-    // Enfocar el nuevo reporte solo si está fuera de la vista actual,
-    // evitando chocar con el redibujado de la capa de calor.
+    // Enfocar el nuevo reporte solo si está fuera de la vista actual
     const lat = Number(newReportPing.latitude);
     const lng = Number(newReportPing.longitude);
     if (
@@ -553,7 +828,7 @@ export default function ReportsMap({
             left: "16px",
             zIndex: 1000,
             fontSize: "0.78rem",
-            maxWidth: "240px",
+            maxWidth: "320px",
             backdropFilter: "blur(6px)",
             backgroundColor: "rgba(255, 255, 255, 0.92)",
           }}
@@ -579,7 +854,7 @@ export default function ReportsMap({
           ) : (
             <div>
               <div className="fw-bold mb-1 text-dark">Tipo de Incidencia</div>
-              <div className="d-flex align-items-center gap-3">
+              <div className="d-flex align-items-center gap-3 flex-wrap">
                 <span className="d-flex align-items-center gap-1">
                   <span
                     className="rounded-circle d-inline-block"
@@ -593,6 +868,20 @@ export default function ReportsMap({
                     style={{ width: "10px", height: "10px", backgroundColor: "#D97706" }}
                   ></span>
                   Alumbrado
+                </span>
+                <span className="d-flex align-items-center gap-1">
+                  <span
+                    className="rounded-circle d-inline-flex align-items-center justify-content-center text-white fw-bold"
+                    style={{
+                      width: "16px",
+                      height: "16px",
+                      background: "linear-gradient(135deg, #611232 0%, #4338CA 100%)",
+                      fontSize: "0.6rem",
+                    }}
+                  >
+                    +
+                  </span>
+                  Agrupados
                 </span>
               </div>
             </div>
