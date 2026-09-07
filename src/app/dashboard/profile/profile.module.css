@@ -12,6 +12,11 @@
   position: relative;
 }
 
+.avatarWrapper {
+  position: relative;
+  display: inline-block;
+}
+
 .avatar {
   flex-shrink: 0;
   overflow: hidden;
@@ -38,6 +43,29 @@
   color: #611232;
   font-size: 2.2rem;
   font-weight: 700;
+}
+
+.avatarEditBtn {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background-color: #611232;
+  color: #fff;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.18s ease, transform 0.18s ease;
+  z-index: 2;
+}
+
+.avatarEditBtn:hover {
+  background-color: #7a1b3f;
+  transform: scale(1.1);
 }
 
 .heroName {
@@ -144,6 +172,12 @@
   border-radius: 14px;
 }
 
+.fieldHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .fieldLabel {
   display: inline-flex;
   align-items: center;
@@ -162,6 +196,32 @@
   font-weight: 700;
   color: #111827;
   word-break: break-word;
+}
+
+.editBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background-color: rgba(97, 18, 50, 0.08);
+  color: #611232;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background-color 0.18s ease, transform 0.18s ease;
+  flex-shrink: 0;
+}
+
+.editBtn:hover {
+  background-color: rgba(97, 18, 50, 0.18);
+  transform: scale(1.08);
+}
+
+.editBtn:focus-visible {
+  outline: 2px solid #611232;
+  outline-offset: 2px;
 }
 
 @media (max-width: 575.98px) {
