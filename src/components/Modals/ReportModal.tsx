@@ -21,22 +21,30 @@ function StatusTimeline({
   status: string;
   history: Record<string, string>;
 }) {
-  const steps = [
-    "En revisión",
-    "Aprobado",
-    "En proceso",
-    "Completado",
-    "No aprobado",
-    "Cerrado",
-  ];
+  const isRejected =
+    status === "No aprobado" ||
+    status === "NO_APROBADO" ||
+    status?.toLowerCase().includes("no aprobado");
+
+  const steps = isRejected
+    ? history?.["Aprobado"]
+      ? ["En revisión", "Aprobado", "No aprobado"]
+      : ["En revisión", "No aprobado"]
+    : [
+        "En revisión",
+        "Aprobado",
+        "En proceso",
+        "Completado",
+        "Cerrado",
+      ];
 
   const order: Record<string, number> = {
     "En revisión": 1,
     Aprobado: 2,
     "En proceso": 3,
     Completado: 4,
-    "No aprobado": 5,
-    Cerrado: 6,
+    Cerrado: 5,
+    "No aprobado": 99,
   };
 
   return (
@@ -47,9 +55,26 @@ function StatusTimeline({
 
       <div className="ps-2 position-relative">
         {steps.map((step, index) => {
-          const isCurrent = order[step] === order[status];
+          const isStepRejected = step === "No aprobado";
+          const isCurrent =
+            step === status ||
+            (isStepRejected && isRejected) ||
+            order[step] === order[status];
           const isInHistory = !!history?.[step];
           const isCompleted = isInHistory && !isCurrent;
+
+          const dotColor = isStepRejected
+            ? "#DC2626"
+            : isCurrent || isCompleted
+            ? "#611232"
+            : "#d1d5db";
+
+          const nextStepIsRejected = steps[index + 1] === "No aprobado";
+          const lineColor = isCompleted
+            ? nextStepIsRejected
+              ? "#DC2626"
+              : "#611232"
+            : "#d1d5db";
 
           return (
             <div key={step} className="d-flex mb-4 position-relative">
@@ -61,7 +86,7 @@ function StatusTimeline({
                     top: "20px",
                     width: "2px",
                     height: "100%",
-                    backgroundColor: isCompleted ? "#611232" : "#d1d5db",
+                    backgroundColor: lineColor,
                     zIndex: 0,
                   }}
                 />
@@ -71,14 +96,14 @@ function StatusTimeline({
                 style={{
                   width: "14px",
                   height: "14px",
-                  backgroundColor: isCurrent
-                    ? "#611232"
-                    : isCompleted
-                    ? "#611232"
-                    : "#d1d5db",
+                  backgroundColor: dotColor,
                   borderRadius: "50%",
                   marginRight: "12px",
                   zIndex: 2,
+                  boxShadow:
+                    isStepRejected && isCurrent
+                      ? "0 0 0 3px rgba(220, 38, 38, 0.25)"
+                      : undefined,
                 }}
               />
 
@@ -86,7 +111,9 @@ function StatusTimeline({
                 <p
                   className="fw-semibold mb-1"
                   style={{
-                    color: isCurrent
+                    color: isStepRejected
+                      ? "#DC2626"
+                      : isCurrent
                       ? "#611232"
                       : isCompleted
                       ? "#374151"
@@ -94,6 +121,14 @@ function StatusTimeline({
                   }}
                 >
                   {step}
+                  {isStepRejected && isCurrent && (
+                    <span
+                      className="badge bg-danger bg-opacity-10 text-danger ms-2"
+                      style={{ fontSize: "0.72rem", fontWeight: 600 }}
+                    >
+                      No procede
+                    </span>
+                  )}
                 </p>
 
                 {history?.[step] && (

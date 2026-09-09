@@ -38,6 +38,7 @@ export type AuthContextType = {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  updateUser: (updates: Partial<User>) => void;
   isLoggedIn: boolean;
 };
 
@@ -47,6 +48,7 @@ export interface ResponseReports {
   status: string;
   latitude: number;
   longitude: number;
+  neighborhood?: string | null;
   description: string;
   evidence: string;
   evidence1?: string;
@@ -56,6 +58,7 @@ export interface ResponseReports {
   assigned_supervisor: number | null;
   reporting_user: number | null;
   typereport: string;
+  asunto?: string | null;
 }
 
 export interface PaginatedResponse {
@@ -297,6 +300,7 @@ export interface NewReportSocketPayload {
     date: string;
     latitude: number;
     longitude: number;
+    reporting_user?: number;
   };
 }
 
@@ -311,5 +315,40 @@ export interface NotificationsContextType {
   lastReportEvent: NewReportSocketPayload | null;
   markAllAsRead: () => Promise<void>;
   refreshNotifications: () => Promise<void>;
+}
+
+// ── Account editing types ──
+
+export interface UpdateImageResponse {
+  msg: string;
+  image_url: string;
+}
+
+export interface UpdatePasswordBody {
+  old_password: string;
+  new_password: string;
+}
+
+export interface UpdatePasswordResponse {
+  message: string;
+}
+
+export interface EmailChangeRequestBody {
+  new_email: string;
+}
+
+export interface EmailChangeRequestResponse {
+  msg: string;
+  verification_token: string;
+}
+
+export interface EmailChangeConfirmBody {
+  verification_token: string;
+  code: string;
+}
+
+export interface EmailChangeConfirmResponse {
+  msg: string;
+  new_email: string;
 }
 

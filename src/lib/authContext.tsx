@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { AuthManager } from "@/lib/authManager";
 import { User, AuthContextType } from "@/utils/types";
 
@@ -83,12 +83,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   };
 
+  /**
+   * Updates partial user fields in both React state and localStorage.
+   * Used after profile changes (image, email) to reflect immediately across all UI.
+   *
+   * @param updates - Partial User object with the fields to update.
+   */
+  const updateUser = useCallback(
+    (updates: Partial<User>): void => {
+      setUser((prev) => {
+        if (!prev) return prev;
+        const updated = { ...prev, ...updates };
+        if (typeof window !== "undefined") {
+          localStorage.setItem("auth_data", JSON.stringify(updated));
+        }
+        return updated;
+      });
+    },
+    []
+  );
+
   return (
     <AuthContext.Provider
       value={{
         user,
         login,
         logout,
+        updateUser,
         isLoggedIn: !!user,
       }}
     >

@@ -1,9 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import Image from "next/image";
 import ProtectedPage from "@/components/ProtectedPage";
 import LoadingImage from "@/components/LoadingImage";
+import { ChangeImageModal } from "@/components/Modals/ChangeImageModal";
+import { ChangePasswordModal } from "@/components/Modals/ChangePasswordModal";
+import { ChangeEmailModal } from "@/components/Modals/ChangeEmailModal";
 import styles from "@/app/dashboard/profile/profile.module.css";
 
 export default function ProfilePage() {
@@ -15,7 +19,11 @@ export default function ProfilePage() {
 }
 
 function ProfileInner() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
+
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
 
   if (!user) {
     return <LoadingImage />;
@@ -32,18 +40,28 @@ function ProfileInner() {
       <div className="row g-4">
         <div className="col-12 col-lg-4">
           <div className={styles.hero}>
-            <div className={styles.avatar}>
-              {user.image ? (
-                <Image
-                  src={user.image}
-                  alt={fullName}
-                  width={96}
-                  height={96}
-                  className={styles.avatarImg}
-                />
-              ) : (
-                <div className={styles.avatarInitials}>{initial}</div>
-              )}
+            <div className={styles.avatarWrapper}>
+              <div className={styles.avatar}>
+                {user.image ? (
+                  <Image
+                    src={user.image}
+                    alt={fullName}
+                    width={96}
+                    height={96}
+                    className={styles.avatarImg}
+                  />
+                ) : (
+                  <div className={styles.avatarInitials}>{initial}</div>
+                )}
+              </div>
+              <button
+                type="button"
+                className={styles.avatarEditBtn}
+                onClick={() => setShowImageModal(true)}
+                title="Cambiar foto de perfil"
+              >
+                <i className="bi bi-pencil-fill"></i>
+              </button>
             </div>
 
             <h2 className={styles.heroName}>{fullName}</h2>
@@ -75,11 +93,39 @@ function ProfileInner() {
               </div>
 
               <div className={styles.field}>
-                <span className={styles.fieldLabel}>
-                  <i className="bi bi-envelope"></i>
-                  Correo electrónico
-                </span>
+                <div className={styles.fieldHeader}>
+                  <span className={styles.fieldLabel}>
+                    <i className="bi bi-envelope"></i>
+                    Correo electrónico
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.editBtn}
+                    onClick={() => setShowEmailModal(true)}
+                    title="Cambiar correo electrónico"
+                  >
+                    <i className="bi bi-pencil-square"></i>
+                  </button>
+                </div>
                 <span className={styles.fieldValue}>{user.email}</span>
+              </div>
+
+              <div className={styles.field}>
+                <div className={styles.fieldHeader}>
+                  <span className={styles.fieldLabel}>
+                    <i className="bi bi-key"></i>
+                    Contraseña
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.editBtn}
+                    onClick={() => setShowPasswordModal(true)}
+                    title="Cambiar contraseña"
+                  >
+                    <i className="bi bi-pencil-square"></i>
+                  </button>
+                </div>
+                <span className={styles.fieldValue}>••••••••</span>
               </div>
 
               <div className={styles.field}>
@@ -93,6 +139,32 @@ function ProfileInner() {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      {showImageModal && (
+        <ChangeImageModal
+          onClose={() => setShowImageModal(false)}
+          onUpdated={(newImageUrl) => {
+            updateUser({ image: newImageUrl });
+            setShowImageModal(false);
+          }}
+        />
+      )}
+
+      {showPasswordModal && (
+        <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />
+      )}
+
+      {showEmailModal && (
+        <ChangeEmailModal
+          currentEmail={user.email}
+          onClose={() => setShowEmailModal(false)}
+          onUpdated={(newEmail) => {
+            updateUser({ email: newEmail });
+            setShowEmailModal(false);
+          }}
+        />
+      )}
     </div>
   );
 }
